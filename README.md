@@ -1,70 +1,9 @@
-�
-�
-️SECURITY ARCHITECTURE REPORT: BIO LOC
-Lead Engineer: Athanasios Athanasopoulos 
-Project: BIO LOC Ecosystem | Version: 2.0-Stable
-Date: February 3, 2026 | Classification: HIGHLY CONFIDENTIAL
-Audit Status:  
-✅
-VERIFIED (ZKP & Anti-Replay Hardened)
-📑EXECUTIVE SUMMARY
-BIO LOC is a "Zero-Trust" security ecosystem designed for generating dynamic "Status 
-Biographies" through deterministic data synthesis. The system’s security model moves 
-beyond traditional credentials, utilizing a triple-layer defense architecture: Behavioral 
-Biometrics, Zero-Knowledge Proofs (ZKP), and Stateful Anti-Replay Protocols.
-1.0 CORE SYSTEM PURPOSE
-The BIO LOC application synthesizes heterogeneous data (notes, logs, tasks) to create a 
-contextual user profile.
-• Data Synthesis: Analysis is performed via natural language processing and 
-contextual mapping algorithms. Crucially, the system does not rely on Large 
-Language Models (LLMs) for user identification, ensuring 100% deterministic logic 
-and eliminating the "hallucination" risks associated with probabilistic AI in security.
-• Privacy-First: Access to biographical data is protected by a cryptographic signature 
-derived directly from the user’s unique biometric footprint.
-2.0 MULTI-LAYER BIOMETRIC ENGINE (30-FACTOR)
-Authentication is passive and continuous, based on 30 distinct behavioral factors.
-Layer
-Factors Analyzed
-Target Defense
-Keystroke 
-Dynamics
-FlightTime, DwellTime, RhythmVariance, 
-ErrorRate
-Physical Theft / Device 
-Takeover
-Spoofing / Impersonation
-Cognitive Traits Post-Error Slowdown, Hesitation Ratio, 
-BurstSpeed
-Social Engineering
-Mobile Sensors HoldingAngleMean, HoldingStability, 
-GaitEnergy
-3.0 ZERO-KNOWLEDGE PROOFS (ZKP)
-Identity verification is achieved via a Non-Interactive ZKP protocol, allowing the server to 
-verify the user without ever receiving or storing sensitive identity secrets.
-• Mathematical Foundation: Built on Pedersen Commitments over a large 
-Mersenne Prime field ($2^{61} - 1$).
-$$C = g^{value} \cdot h^r \pmod{p}$$
-• Secret Protection: The server only possesses the Commitment ($C$). The user 
-proves knowledge of the value and randomness r using the Fiat-Shamir heuristic, 
-ensuring secrets never leave the client device.
-4.0 SERVER-SIDE NONCE & REPLAY PROTECTION
-To eliminate intercept-and-replay vulnerabilities, BIO LOC implements a stateful 
-Challenge-Response Architecture:
-1. Challenge Generation: The server generates a cryptographically secure nonce 
-(UUID) and stores it as PENDING in the database (Firestore).
-2. Cryptographic Binding: This nonce is incorporated into the ZKP challenge hash. 
-The proof is mathematically bound to this unique, one-time value.
-3. Atomic Invalidation (Burn-on-Use): Upon submission, the server immediately 
-marks the nonce as USED. Even if mathematical verification fails or is interrupted, 
-the nonce is invalidated, preventing any secondary use of the same proof.
-5.0 ANTI-ROBOT DEFENSE (STATISTICAL UNIFORMITY)
-The biometric engine features an explicit defense mechanism against automated scripts 
-and replay bots:
-• Variance Audit: The system monitors the rhythmVariance. Humans are inherently 
-imperfect; if the variance is near-zero (below a 5.0 threshold), the input is flagged as 
-"Robotic Precision."
-• Instant Rejection: Machine-like timing triggers an immediate session termination, 
-forcing attackers to simulate human imperfection—a task that is statistically 
-impossible without access to the target's specific cognitive profile.
-Report Authored by: Gemini Ultra (Security Audit Module)
-Verification: 100% Deterministic Cryptography | 0% LLM Identification Ris
+🛡️ BioLoc-ZKP: The Biometric FortressBioLoc-ZKP is a next-generation security infrastructure that treats the human body as a permanent, non-transferable cryptographic key. By combining Zero-Knowledge Proofs (ZKP) with a 60-factor Neuro-Mechanical behavioral engine, it eliminates the risks of credential theft and profile poisoning.🌌 OverviewTraditional security relies on what you know (passwords) or what you have (tokens). BioLoc-ZKP secures access based on who you are and how you behave. It creates a "Cognitive Firewall" that verifies human intent and physical identity without ever storing a raw password or biometric template in the cloud.🛠️ Core Security Architecture1. The Cognitive Firewall (AI Intent Layer)Before biometric verification begins, users must pass a tiered conversational challenge.Dynamic Traps: Generates technical "trap" questions based on the user's professional role to filter out automated bots.Agentic Verification: Requires high-level collaboration with external AI tools to prove "Agentic Intent" for high-security clearance.2. Zero-Knowledge Identity (ZKP Layer)Identity is verified using Pedersen Commitments ($C = g^v \cdot h^r \pmod p$), ensuring the server never learns your secret phrase.Replay Protection: Every proof is mathematically bound to a unique, server-side generated nonce.Privacy First: Uses cryptographic hashing (SHA-256 with per-user salts) to ensure raw secrets never touch the database.3. The 60-Factor Behavioral EngineA "Straight" (non-adaptive) model that analyzes 60 unique neuro-mechanical markers.Mechanical DNA: Analyzes keystroke timing, flight variance, and hand syncopation.Peripheral Jitter: Tracks mouse movement curvature, jitter indices, and scroll acceleration.Robotic Rejection: Automatically denies access if the typing rhythm is too uniform (Consistency Score < 0.02), effectively blocking script-based attacks.🚀 Getting StartedPrerequisitesNode.js v18+Firebase Project (Firestore & API keys)Environment Variables: Create a .env.local file with the following:PlaintextNEXT_PUBLIC_FIREBASE_API_KEY=your_key
+ADMIN_PASSWORD=your_secure_admin_password
+EMAIL_USER=your_notification_email
+EMAIL_PASS=your_email_app_password
+InstallationClone the repository:Bashgit clone https://github.com/sakis070864/BioLoc-ZKP.git
+cd BioLoc-ZKP
+Install dependencies:Bashnpm install
+Run in development mode:Bashnpm run dev
+🛡️ Administrative Control: Nexus ControlThe Nexus Control dashboard provides real-time oversight for SaaS administrators:Ghost Scan: Recovers "orphan" data from deleted organizations.Recursive Purge: Securely deletes entire organizational structures using atomic writeBatch operations.Kill Switch: Instantly revokes access for specific employees or entire companies via real-time Firestore listeners.
