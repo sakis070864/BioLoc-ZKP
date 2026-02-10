@@ -1,73 +1,15 @@
-// --- 30-FACTOR BIOMETRIC ANALYSIS ENGINE (DESKTOP + MOBILE) ---
-
-interface KeyEvent {
-    code: string;
-    time: number;
-    type: "keydown" | "keyup";
-}
-
-export interface DeviceSensorData {
-    alpha: number | null; // Z-axis rotation
-    beta: number | null;  // X-axis rotation (front/back tilt)
-    gamma: number | null; // Y-axis rotation (left/right tilt)
-    accelX: number | null;
-    accelY: number | null;
-    accelZ: number | null;
-    time: number;
-}
-
-export interface BiometricFactors {
-    // 1. TIMING (Legacy)
-    flightTimeAvg: number;
-    dwellTimeAvg: number;
-    rhythmVariance: number;
-
-    // 2. ERGONOMICS
-    pinkyIndexRatio: number;
-    shiftBalance: number;
-
-    // 3. KEY-SPECIFIC
-    spacebarImpact: number;   // Latency around space
-    spaceDwellTime: number;   // [NEW] How long space is held
-    shiftHoldTime: number;    // [NEW] How long shift is held
-    enterLatency: number;     // [NEW] Pause before Enter
-
-    // 4. ERROR & COGNITIVE
-    errorRate: number;
-    postErrorSlowdown: number;
-    deleteSeekTime: number;   // [NEW] Time to find Backspace
-    deleteDwellTime: number;  // [NEW] How long Backspace is held
-
-    // 5. SPEED & BURSTINESS
-    glideFactor: number;      // Dwell/Flight Ratio
-    doubleTapSpeed: number;   // AA, BB, CC
-    trigraphVelocity: number; // Rolling 3 keys
-    burstSpeed: number;       // [NEW] Speed of fastest 30% of typing
-    hesitationRatio: number;  // [NEW] Ratio of >500ms pauses to avg flight
-    wordPause: number;        // [NEW] Pause after Space
-    sentencePause: number;    // [NEW] Pause after Enter/Period
-
-    // 6. LINGUISTIC / MUSCLE MEMORY
-    vowelSpeed: number;       // [NEW] Avg flight for AEIOU
-    consonantSpeed: number;   // [NEW] Avg flight for others
-    commonNgrams: number;     // [NEW] Speed of 'TH', 'HE', 'IN' (Approx)
-    sequenceFlow: number;     // [NEW] Stability of flow (Variance of variance)
-
-    // 7. SESSION DYNAMICS
-    startupLatency: number;
-    fatigueRate: number;      // [NEW] Slowdown trend over session
-    consistencyScore: number; // [NEW] StdDev(Dwell) / Avg(Dwell)
-
-    // 8. MOBILE SENSORS
-    holdingAngleMean: number;
-    holdingStability: number;
-    gaitEnergy: number;
-}
-
-
 /**
- * FINAL VERSION: Adaptive 30-Factor Engine
+ * @file biometrics.ts
+ * @security_notice PROPRIETARY MILITARY-GRADE PROTOCOLS
+ * * For security reasons and to protect Intellectual Property (IP) related to 
+ * Pedersen Commitment and Manhattan distance biometric analysis, the core logic 
+ * of this file has been moved to a private, air-gapped environment.
+ * * Technical auditing and live execution demonstrations are available upon request 
+ * during professional interviews.
+ * * @author Athanasios Athanasopoulos
+ * @version 2026.1.0
  */
+
 // Hardened Adaptive 30-Factor Engine
 export function compareBiometrics(profile: BiometricFactors, session: SessionData): { score: number, distance: number, confidence: number } {
     const keys = Array.isArray(session) ? session : session.keys;

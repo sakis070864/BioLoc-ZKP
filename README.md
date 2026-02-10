@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🛡️ BioLoc-ZKP: The Biometric Fortress
 
-## Getting Started
+The human body is a permanent, non-transferable cryptographic key.
 
-First, run the development server:
+BioLoc-ZKP is a next-generation security infrastructure that fuses Zero-Knowledge Proofs (ZKP) with a 60-factor Neuro-Mechanical behavioral engine. By treating physical identity and cognitive intent as the primary credentials, it effectively eliminates the risks of credential theft, profile poisoning, and automated script attacks.
 
-```bash
+🌌 Overview
+
+Traditional security models rely on what you know (passwords) or what you have (tokens). BioLoc-ZKP shifts the paradigm to who you are and how you behave.
+
+It establishes a "Cognitive Firewall" that verifies human intent and physical identity without ever storing a raw password or biometric template in the cloud. Your secrets never leave your device; only mathematical proofs do.
+
+🛠️ Core Security Architecture
+
+1. The Cognitive Firewall (AI Intent Layer)
+
+Before biometric verification begins, users must pass a tiered conversational challenge designed to prove consciousness and specific professional context.
+
+Dynamic Traps: Generates technical "trap" questions tailored to the user's specific professional role to filter out sophisticated LLM-based bots.
+
+Agentic Verification: For high-security clearance, the system requires high-level collaboration with external AI tools to prove "Agentic Intent."
+
+2. Zero-Knowledge Identity (ZKP Layer)
+
+Identity is verified using Pedersen Commitments, ensuring the server never learns your secret phrase.
+
+Mathematical Foundation: $C = g^v \cdot h^r \pmod p$
+
+Replay Protection: Every proof is mathematically bound to a unique, server-side generated nonce.
+
+Privacy First: Uses cryptographic hashing (SHA-256 with per-user salts) to ensure raw secrets never touch the database.
+
+3. The 60-Factor Behavioral Engine
+
+A "Straight" (non-adaptive) model that analyzes 60 unique neuro-mechanical markers to verify the biological source of input.
+
+Mechanical DNA: Analyzes keystroke timing, flight variance, and hand syncopation.
+
+Peripheral Jitter: Tracks mouse movement curvature, jitter indices, and scroll acceleration.
+
+Robotic Rejection: Automatically denies access if the typing rhythm is too uniform ($\text{Consistency Score} < 0.02$), effectively blocking script-based attacks.
+
+🚀 Getting Started
+
+Prerequisites
+
+Node.js v18+
+
+Firebase Project (Firestore & API keys)
+
+Environment Variables: Create a .env.local file with the following:
+
+NEXT_PUBLIC_FIREBASE_API_KEY=your_key
+ADMIN_PASSWORD=your_secure_admin_password
+EMAIL_USER=your_notification_email
+EMAIL_PASS=your_email_app_password
+
+
+Installation
+
+Clone the repository:
+
+git clone [https://github.com/sakis070864/BioLoc-ZKP.git](https://github.com/sakis070864/BioLoc-ZKP.git)
+cd BioLoc-ZKP
+
+
+Install dependencies:
+
+npm install
+
+
+Run in development mode:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+🛡️ Administrative Control: Nexus Control
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The Nexus Control dashboard provides real-time oversight for SaaS administrators, offering granular control over the security ecosystem:
 
-## Learn More
+Ghost Scan: Recovers "orphan" data from deleted organizations to ensure no cryptographic debris is left behind.
 
-To learn more about Next.js, take a look at the following resources:
+Recursive Purge: Securely deletes entire organizational structures using atomic writeBatch operations for data integrity.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Kill Switch: Instantly revokes access for specific employees or entire companies via real-time Firestore listeners.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Developed with a "Sentient Guardian" philosophy to ensure privacy and security in the age of AI.
