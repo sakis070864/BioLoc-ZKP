@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot, collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import { Lock, ShieldCheck, ShieldAlert, Activity, Eye, Play, User, Fingerprint, ChevronRight, EyeOff } from 'lucide-react';
+import { doc, getDoc, onSnapshot, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Lock, ShieldCheck, ShieldAlert, Activity, Eye, Play, ChevronRight, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from "clsx";
 
@@ -101,15 +101,9 @@ const SecureLoginPage = () => {
         try {
             // 1. Fetch User (Try Loopup by ID first)
             const userRef = doc(db, 'companies', companyId, 'users', gateId);
-            let userSnap = await getDoc(userRef);
+            const userSnap = await getDoc(userRef);
 
-            // Fallback: If not found by ID, try searching where ID field matches (if stored in doc) or Name matches?
-            // Actually, best to just enforce ID matching. 
-            // But let's check if the user exists with a different casing?
-            // Firestore IDs overlap effectively only if exact. 
-            // Let's assume strict ID.
-
-            let data = userSnap.exists() ? userSnap.data() : null;
+            const data = userSnap.exists() ? userSnap.data() : null;
 
             let success = false;
             let logStatus = "FAIL";
@@ -127,13 +121,8 @@ const SecureLoginPage = () => {
                     const salt = data.salt || "";
                     const inputHash = await sha256(gatePassword, salt);
 
-                    // CONSTANT-TIME COMPARISON SIMULATION
-                    // To avoid timing attacks, we shouldn't fail fast.
-                    // But in JS, true constant time is hard without libs.
-                    // We'll trust the salt + network jitter to mask this for now.
                     passMatch = data.phraseHash === inputHash;
                 }
-                // REMOVED LEGACY FALLBACK (Security Hardening Phase 2)
 
                 if (nameMatch && passMatch) {
                     success = true;
@@ -162,7 +151,7 @@ const SecureLoginPage = () => {
                 setGateError("Verification Failed. Check credentials.");
             }
 
-        } catch (err: any) {
+        } catch (err) {
             console.error("Gate Error:", err);
             setGateError("Connection Error. Try again.");
         } finally {
@@ -206,7 +195,6 @@ const SecureLoginPage = () => {
             if (state === 'FAIL' || state === 'LOCKED') ctx.strokeStyle = '#ef4444';
             else if (state === 'SUCCESS') ctx.strokeStyle = '#22c55e';
             else {
-                const blueVal = 200 + (spikeRef.current * 55);
                 ctx.strokeStyle = `rgb(${50 + spikeRef.current * 100}, ${150 + spikeRef.current * 50}, ${255})`;
             }
 
@@ -233,7 +221,7 @@ const SecureLoginPage = () => {
     // Biometric Handlers
     const handleStartSession = async () => {
         if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
-            try { await (DeviceMotionEvent as any).requestPermission(); } catch (e) { }
+            try { await (DeviceMotionEvent as any).requestPermission(); } catch { }
         }
         setIsSessionActive(true);
         setTimeout(() => inputRef.current?.focus(), 100);

@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import AiGatekeeper from "@/components/AiGatekeeper";
-import { Fingerprint, Lock, Shield, Activity, Key, Smartphone, Keyboard, Eye, Globe, ShieldAlert, Terminal, Unlock, Cpu, Cog, RefreshCcw } from "lucide-react";
+import { Activity, Lock, Shield, Keyboard, Smartphone, Eye, ShieldAlert, Unlock, Cog, RefreshCcw } from "lucide-react";
 
 // --- COMPONENTS ---
 
@@ -104,10 +104,8 @@ const TerminalSidebar = () => {
       "[BIO-LOC]: Analyzing keystroke dynamics...",
       "[GUARD]: Sentinel Protocol Online",
     ];
-    let i = 0;
     const interval = setInterval(() => {
       setLines(prev => [...prev.slice(-10), msgs[Math.floor(Math.random() * msgs.length)]]);
-      i++;
     }, 2000);
     return () => clearInterval(interval);
   }, []);
@@ -187,8 +185,10 @@ const HardwareControlUnit = () => {
 
   useEffect(() => {
     // Reset states at the start of a new cycle
-    setIsSecured(false);
-    setProgress(0);
+    requestAnimationFrame(() => {
+      if (isSecured) setIsSecured(false);
+      if (progress !== 0) setProgress(0);
+    });
 
     // 1. Handle Progress Bar increment
     const progressInterval = setInterval(() => {
@@ -682,10 +682,10 @@ export default function LandingPage() {
               <span className="text-cyan-500">SHIELD</span>.
             </h2>
             <div className="space-y-6 text-slate-400 leading-relaxed text-lg md:text-xl max-w-3xl mx-auto">
-              <p>
-                <strong className="text-white block mb-2 text-2xl">"Data-Anonymization via Vector Mapping"</strong>
-                We never store your raw movements. Our neural engine instantly translates your behavior into high-dimensional mathematical vectors—anonymous 'row data' that is indecipherable to human eyes and useless to hackers.
-              </p>
+              <div className="text-slate-400 leading-relaxed text-lg md:text-xl max-w-3xl mx-auto">
+                <strong className="text-white block mb-2 text-2xl">&quot;Data-Anonymization via Vector Mapping&quot;</strong>
+                We never store your raw movements. Our neural engine instantly translates your behavior into high-dimensional mathematical vectors—anonymous &apos;row data&apos; that is indecipherable to human eyes and useless to hackers.
+              </div>
             </div>
           </motion.div>
 

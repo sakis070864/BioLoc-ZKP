@@ -2,20 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, getDocs, collectionGroup, writeBatch } from 'firebase/firestore';
-import { ShieldCheck, Plus, Trash2, Copy, ExternalLink, RefreshCw, User, CheckCircle, AlertTriangle, Link as LinkIcon, X } from 'lucide-react';
-import { zkp } from '@/lib/zkp';
+import { collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, getDocs, collectionGroup, writeBatch, Timestamp } from 'firebase/firestore';
+import { ShieldCheck, Plus, Trash2, Copy, ExternalLink, RefreshCw, User, CheckCircle, Link as LinkIcon, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 
 interface Company {
     id: string; // The companyId (e.g. google_inc)
     displayName: string;
-    createdAt: any;
+    createdAt: Timestamp | null;
     isActive: boolean;
-    lastPaymentDate?: any; // Timestamp
+    lastPaymentDate?: Timestamp | null; // Timestamp
     isGhost?: boolean; // New flag for recovered data
     dashboardUrl?: string; // Persisted Link
+}
+
+interface CompanyUser {
+    id: string;
+    name?: string;
+    displayName?: string;
+    employeeId?: string;
+    createdAt?: Timestamp;
+    [key: string]: any;
 }
 
 export default function AdminDashboard() {
@@ -24,7 +32,7 @@ export default function AdminDashboard() {
     const [ghostCompanies, setGhostCompanies] = useState<Company[]>([]);
 
     const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-    const [companyUsers, setCompanyUsers] = useState<any[]>([]);
+    const [companyUsers, setCompanyUsers] = useState<CompanyUser[]>([]);
     const [newCompanyId, setNewCompanyId] = useState('');
     const [newCompanyName, setNewCompanyName] = useState('');
     const [loading, setLoading] = useState(false);
@@ -44,7 +52,7 @@ export default function AdminDashboard() {
         }
 
         const unsubscribe = onSnapshot(collection(db, 'companies', selectedCompany.id, 'users'), (snapshot) => {
-            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CompanyUser[];
             setCompanyUsers(list);
         });
         return () => unsubscribe();
@@ -185,21 +193,21 @@ export default function AdminDashboard() {
 
             if (!snapshot.empty) {
                 console.log(`Deep cleaning ${snapshot.size} users...`);
-                // For each user, we must ALSO delete their 'history' subcollection
-                // Note: Firestore batch has a limit of 500 ops. For very large datasets, specific pagination logic is needed.
-                // Assuming standard company sizes here.
-
                 for (const userDoc of snapshot.docs) {
-                    // Delete User Doc
                     batch.delete(userDoc.ref);
-
-                    // Handle History Subcollection (Needs separate fetch unfortunately)
+                    // Handle History Subcollection
                     const historyRef = collection(db, 'companies', companyId, 'users', userDoc.id, 'history');
                     const historySnapshot = await getDocs(historyRef);
-                    historySnapshot.forEach(hDoc => {
-                        batch.delete(hDoc.ref);
-                    });
+                    historySnapshot.forEach(hDoc => batch.delete(hDoc.ref));
                 }
+            }
+
+            // 2b. Delete 'login_logs' subcollection (The Phantom Cause)
+            const logsRef = collection(db, 'companies', companyId, 'login_logs');
+            const logsSnapshot = await getDocs(logsRef);
+            if (!logsSnapshot.empty) {
+                console.log(`Cleaning ${logsSnapshot.size} login logs...`);
+                logsSnapshot.forEach(logDoc => batch.delete(logDoc.ref));
             }
 
             // 3. Delete the Company Document
@@ -218,9 +226,9 @@ export default function AdminDashboard() {
     };
 
     // Helper to calculate days since payment
-    const getDaysSincePayment = (timestamp: any) => {
+    const getDaysSincePayment = (timestamp: Timestamp | null | undefined) => {
         if (!timestamp) return 0;
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp as any);
         const diff = new Date().getTime() - date.getTime();
         return Math.floor(diff / (1000 * 3600 * 24));
     };
@@ -391,10 +399,10 @@ export default function AdminDashboard() {
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                companyUsers.map((user: any) => (
+                                                companyUsers.map((user) => (
                                                     <tr key={user.id} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
                                                         <td className="py-3 px-4">
-                                                            <div className="font-bold text-slate-200">{user.name}</div>
+                                                            <div className="font-bold text-slate-200">{user.name || user.displayName}</div>
                                                             <div className="text-xs text-slate-500 font-mono">{user.employeeId || user.id}</div>
                                                         </td>
                                                         <td className="py-3 px-4 text-sm text-slate-400">

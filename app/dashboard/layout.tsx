@@ -1,40 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { clsx } from "clsx";
 
-export default function DashboardLayout({
+import { Suspense } from "react";
+
+function DashboardLayoutContent({
     children,
 }: {
     children: React.ReactNode;
 }) {
     const router = useRouter();
-    const [companyId, setCompanyId] = useState<string | null>(null);
-    const [isSuspended, setIsSuspended] = useState(false);
-
     const searchParams = useSearchParams();
     const urlCompanyId = searchParams.get("companyId");
 
+    const [companyId, setCompanyId] = useState<string | null>(null);
+    const [isSuspended, setIsSuspended] = useState(false);
+
     useEffect(() => {
-        // Check URL first (allow deep linking / admin redirect)
+        // Initial load of company ID - Client Side Only
+        const storedId = sessionStorage.getItem("zkp_company_id");
         if (urlCompanyId) {
             sessionStorage.setItem("zkp_company_id", urlCompanyId);
             setCompanyId(urlCompanyId);
-            return;
-        }
-
-        // Basic session check
-        const storedId = sessionStorage.getItem("zkp_company_id");
-        if (!storedId) {
-            router.push("/login");
-        } else {
+        } else if (storedId) {
             setCompanyId(storedId);
+        } else {
+            router.push("/login");
         }
-    }, [router, urlCompanyId]);
+    }, [urlCompanyId, router]);
 
     // Listen for Suspension Status AND Deletion (Kill Switch)
     useEffect(() => {
@@ -53,7 +51,9 @@ export default function DashboardLayout({
         return () => unsubscribe();
     }, [companyId]);
 
-    if (!companyId) return null; // Or a loading spinner
+    // if (!companyId) return null; // Removed to prevent flicker, let children render or show partial UI if needed, but logic implies we wait?
+    // Actually, keeping the check but returning a loader makes more sense inside the content.
+    if (!companyId) return <div className="min-h-screen bg-[#020617] text-cyan-500 p-10">Initializing Secure Session...</div>;
 
     return (
         <div className="min-h-screen bg-[#020617] flex flex-col">
@@ -114,5 +114,17 @@ export default function DashboardLayout({
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function DashboardLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#020617] text-white p-10">Loading Environment...</div>}>
+            <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        </Suspense>
     );
 }

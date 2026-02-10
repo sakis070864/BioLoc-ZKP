@@ -5,12 +5,12 @@ import { motion } from "framer-motion";
 import { useBiometricCapture } from "@/hooks/useBiometricCapture";
 import { useMouseTracker } from "@/hooks/useMouseTracker";
 import { useDeviceSensors } from "@/hooks/useDeviceSensors";
-import { analyzeBiometric30 } from "@/lib/biometrics";
+import { analyzeBiometric30, SessionData } from "@/lib/biometrics";
 import { clsx } from "clsx";
 import RhythmVisualizer from "@/components/ui/RhythmVisualizer";
 
 interface BiometricCaptureProps {
-    onComplete: (profile: any) => void;
+    onComplete: (profile: { rawData: SessionData[]; phrase: string }) => void;
     mode?: "train" | "verify";
     trainingReps?: number;
     initialPhrase?: string; // New prop for passing the training phrase
@@ -70,16 +70,23 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
         setInputValue(""); // Clear for training
     };
 
-    const [history, setHistory] = useState<any[]>([]); // Array of sessions
+    const [history, setHistory] = useState<SessionData[]>([]); // Array of sessions
 
-    const startTimeRef = useRef(typeof window !== 'undefined' ? performance.now() : 0);
+    const startTimeRef = useRef(0);
+
+    // Set initial start time on mount or when phrase is set
+    useEffect(() => {
+        if (isPhraseSet && startTimeRef.current === 0) {
+            startTimeRef.current = performance.now();
+        }
+    }, [isPhraseSet]);
 
     const handleSuccessRep = () => {
         // Validation Placeholder
         setFeedback("good");
 
         // Capture the current session data
-        const currentSession = {
+        const currentSession: SessionData = {
             keys: [...data],
             mouse: [...mouseData],
             sensors: [...sensorData],
@@ -165,7 +172,7 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
                 {targetPhrase}
             </div>
 
-            {/* Input Field */}
+            {/* Input Field Input Field Input Field */}
             <div className="relative w-full max-w-lg">
                 <input
                     ref={inputRef}

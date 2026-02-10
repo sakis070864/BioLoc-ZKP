@@ -1,14 +1,14 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
+
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
-import { HelpCircle, X, Shield, Users, Lock, ChevronRight } from "lucide-react";
+import { HelpCircle, X, Shield, Users, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, where, doc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, doc, updateDoc } from "firebase/firestore";
 import SecuritySlider from "@/components/dashboard/SecuritySlider";
 import EmployeeTable, { Employee } from "@/components/dashboard/EmployeeTable";
 
@@ -17,28 +17,26 @@ import { Suspense } from 'react';
 function DashboardContent() {
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [securityLevel, setSecurityLevel] = useState(85);
-    const [loading, setLoading] = useState(true);
     const [isSuspended, setIsSuspended] = useState(false);
 
     // Get Company ID from session (set during login)
     // Fallback to google_inc only if session is missing (e.g. direct dev access)
-    const [companyId, setCompanyId] = useState<string>("");
-
-    // Allow URL override for "Login as Admin" flow
-    const searchParams = useSearchParams();
-    const urlCompanyId = searchParams.get("companyId");
+    const [companyId, setCompanyId] = useState<string | null>(null);
 
     useEffect(() => {
+        // Hydration Safe Initialization
         if (typeof window !== "undefined") {
-            if (urlCompanyId) {
-                setCompanyId(urlCompanyId);
-                sessionStorage.setItem("zkp_company_id", urlCompanyId);
-            } else {
-                const stored = sessionStorage.getItem("zkp_company_id");
-                setCompanyId(stored || "google_inc");
+            const urlId = new URLSearchParams(window.location.search).get("companyId");
+            const storedId = sessionStorage.getItem("zkp_company_id");
+            const initialId = urlId || storedId || "google_inc";
+            setCompanyId(initialId);
+
+            if (urlId) {
+                if (urlId !== initialId) setCompanyId(urlId);
+                sessionStorage.setItem("zkp_company_id", urlId);
             }
         }
-    }, [urlCompanyId]);
+    }, []);
 
     const [trainingReps, setTrainingReps] = useState(10);
 
@@ -57,7 +55,6 @@ function DashboardContent() {
                 ...doc.data()
             })) as Employee[];
             setEmployees(users);
-            setLoading(false);
         });
 
         // 2. Subscribe to Company Settings (Security + Training + Status)
@@ -100,7 +97,20 @@ function DashboardContent() {
     const [empName, setEmpName] = useState("");
     const [empId, setEmpId] = useState("");
 
+    const [magicLink, setMagicLink] = useState("Loading...");
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && companyId) {
+            const params = new URLSearchParams();
+            if (companyId) params.append('companyId', companyId);
+            if (empName) params.append('name', empName);
+            if (empId) params.append('id', empId.replace("Engeneer", "Engineer"));
+            setMagicLink(`${window.location.origin}/login?${params.toString()}`);
+        }
+    }, [companyId, empName, empId]);
+
     const generateLink = () => {
+        // Kept for clipboard COPY logic which is an event handler (safe)
         if (typeof window === 'undefined') return '';
         const params = new URLSearchParams();
         if (companyId) params.append('companyId', companyId);
@@ -129,7 +139,7 @@ function DashboardContent() {
                     <p className="text-red-400 font-mono uppercase tracking-widest text-sm mb-8">Administrative Lockout Active</p>
 
                     <p className="text-slate-400 mb-8 leading-relaxed">
-                        This organization's access to the ZKP Biometric Cloud has been securely paused by the administrator.
+                        This organization&apos;s access to the ZKP Biometric Cloud has been securely paused by the administrator.
                         Live monitoring and authentication services are currently offline.
                         <br /><br />
                         <span className="text-slate-300">Contact Administration at <a href="mailto:mastorematas@gmail.com" className="text-cyan-400 hover:underline">mastorematas@gmail.com</a></span>
@@ -271,7 +281,7 @@ function DashboardContent() {
                         </div>
                     </div>
 
-                    <EmployeeTable employees={employees} companyId={companyId} />
+                    <EmployeeTable employees={employees} companyId={companyId || ""} />
                 </div>
 
                 {/* Right Col: Controls */}
@@ -312,13 +322,14 @@ function DashboardContent() {
                         <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center gap-2 group cursor-pointer hover:border-cyan-500/50 transition-all"
                             onClick={() => {
                                 const link = generateLink();
-                                navigator.clipboard.writeText(link);
-                                // Optional: Visual feedback
-                                alert("Magic Link copied!");
+                                if (link) {
+                                    navigator.clipboard.writeText(link);
+                                    alert("Magic Link copied!");
+                                }
                             }}
                         >
                             <code className="text-xs text-slate-300 font-mono truncate flex-1">
-                                {typeof window !== 'undefined' ? generateLink() : 'Loading...'}
+                                {magicLink}
                             </code>
                             <div className="p-1.5 bg-slate-800 rounded group-hover:bg-cyan-500/20 group-hover:text-cyan-400 transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
@@ -329,7 +340,7 @@ function DashboardContent() {
                     <SecuritySlider value={securityLevel} onChange={handleSecurityChange} />
 
                     {/* NEW: Training Repetitions Control */}
-                    <div className="glass-panel p-6 rounded-2xl border border-slate-800">
+                    <div className="glass-panel p-6 rounded-2xl border border-slate-800 mt-4">
                         <h3 className="text-white text-xs font-bold uppercase tracking-wider mb-2">Training Depth</h3>
                         <p className="text-slate-400 text-xs mb-4">Required keystroke repetitions.</p>
 
@@ -352,22 +363,8 @@ function DashboardContent() {
                             </div>
                         </div>
                     </div>
-
-                    {/* Mini Log (Placeholder) */}
-                    <div className="glass-panel p-6 rounded-2xl border border-slate-700/50">
-                        <h3 className="text-white font-bold mb-4">System Logs</h3>
-                        <div className="space-y-3">
-                            {employees.slice(0, 3).map(e => (
-                                <div key={e.id} className="text-xs text-slate-400 border-b border-slate-800 pb-2">
-                                    <span className="text-cyan-400">[{new Date().toLocaleTimeString()}]</span> Proof received for {e.userId}. Risk: {e.riskScore}%
-                                </div>
-                            ))}
-                            <div className="text-xs text-slate-500 italic">System initialized...</div>
-                        </div>
-                    </div>
                 </div>
             </div>
-
         </div>
     );
 }

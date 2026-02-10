@@ -16,8 +16,10 @@ export default function LiquidProgressBar({ current, total, label }: LiquidProgr
 
     useEffect(() => {
         // Trigger pulse effect on progress change
-        setPulse(true);
-        const timeout = setTimeout(() => setPulse(false), 500);
+        const timeout = setTimeout(() => {
+            setPulse(true);
+            setTimeout(() => setPulse(false), 500);
+        }, 0);
         return () => clearTimeout(timeout);
     }, [current]);
 
