@@ -11,6 +11,33 @@
  */
 
 // Hardened Adaptive 30-Factor Engine
+
+export interface KeyEvent {
+    code: string;
+    time: number;
+    type: "keydown" | "keyup";
+}
+
+export interface DeviceSensorData {
+    beta?: number | null;
+    gamma?: number | null;
+    accelX?: number | null;
+    accelY?: number | null;
+    accelZ?: number | null;
+}
+
+export interface BiometricFactors {
+    flightTimeAvg: number; dwellTimeAvg: number; rhythmVariance: number;
+    pinkyIndexRatio: number; shiftBalance: number;
+    spacebarImpact: number; spaceDwellTime: number; shiftHoldTime: number; enterLatency: number;
+    errorRate: number; postErrorSlowdown: number; deleteSeekTime: number; deleteDwellTime: number;
+    glideFactor: number; doubleTapSpeed: number; trigraphVelocity: number;
+    burstSpeed: number; hesitationRatio: number; wordPause: number; sentencePause: number;
+    vowelSpeed: number; consonantSpeed: number; commonNgrams: number; sequenceFlow: number;
+    startupLatency: number; fatigueRate: number; consistencyScore: number;
+    holdingAngleMean: number; holdingStability: number; gaitEnergy: number;
+}
+
 export function compareBiometrics(profile: BiometricFactors, session: SessionData): { score: number, distance: number, confidence: number } {
     const keys = Array.isArray(session) ? session : session.keys;
     const sensors = Array.isArray(session) ? [] : (session.sensors || []);

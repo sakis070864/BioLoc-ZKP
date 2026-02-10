@@ -367,7 +367,7 @@ const SecureLoginPage = () => {
                             <p className="text-slate-500 text-xs mt-2 tracking-widest">IDENTITY VERIFICATION REQUIRED</p>
                         </div>
 
-                        <form onSubmit={handleGateVerification} className="space-y-4">
+                        <form onSubmit={handleGateVerification} className="space-y-4" autoComplete="off">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Full Name</label>
                                 <input
@@ -375,6 +375,8 @@ const SecureLoginPage = () => {
                                     value={gateName}
                                     onChange={(e) => setGateName(e.target.value)}
                                     placeholder="e.g. John Doe"
+                                    autoComplete="off"
+                                    data-form-type="other"
                                     className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-all"
                                 />
                             </div>
@@ -386,6 +388,8 @@ const SecureLoginPage = () => {
                                     onChange={(e) => setGateId(e.target.value)}
                                     placeholder="e.g. ID-001"
                                     disabled={isRevoked}
+                                    autoComplete="off"
+                                    data-form-type="other"
                                     className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             </div>
@@ -397,6 +401,8 @@ const SecureLoginPage = () => {
                                         value={gatePassword}
                                         onChange={(e) => setGatePassword(e.target.value)}
                                         placeholder="••••••••"
+                                        autoComplete="new-password"
+                                        data-form-type="other"
                                         className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 transition-all font-mono tracking-widest"
                                     />
                                     <button
