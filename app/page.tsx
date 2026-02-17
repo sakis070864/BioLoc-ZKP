@@ -186,8 +186,8 @@ const HardwareControlUnit = () => {
   useEffect(() => {
     // Reset states at the start of a new cycle
     requestAnimationFrame(() => {
-      if (isSecured) setIsSecured(false);
-      if (progress !== 0) setProgress(0);
+      setIsSecured(false);
+      setProgress(0);
     });
 
     // 1. Handle Progress Bar increment

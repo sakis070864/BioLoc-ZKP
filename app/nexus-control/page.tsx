@@ -19,55 +19,156 @@ interface Company {
 
 export default function NexusControl() {
     const [isUnlocked, setIsUnlocked] = useState(false);
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState(false);
-
-    // --- STEALTH LAYER (FAKE 404) ---
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        try {
-            const res = await fetch('/api/admin/auth', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password })
-            });
-
-            if (res.ok) {
-                setIsUnlocked(true);
-            } else {
-                setError(true);
-                setTimeout(() => setError(false), 1000);
-            }
-        } catch (err) {
-            console.error(err);
-            setError(true);
+    // --- CHECK SESSION ON MOUNT (ONLY IF UNLOCKED PARAM PRESENT) ---
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('unlocked') === 'true') {
+            const checkSession = async () => {
+                try {
+                    const res = await fetch('/api/admin/check-session');
+                    const data = await res.json();
+                    if (data.unlocked) {
+                        setIsUnlocked(true);
+                        // Optional: Clean URL
+                        window.history.replaceState({}, '', '/nexus-control');
+                    }
+                } catch (err) {
+                    // Stay locked
+                }
+            };
+            checkSession();
         }
+    }, []);
+
+    // --- PSYCHOLOGICAL WARFARE PROTOCOL ---
+    const [showDecoy, setShowDecoy] = useState(false);
+    const [decoyCode, setDecoyCode] = useState('');
+    const [silentRequestSent, setSilentRequestSent] = useState(false);
+    const [selfDestruct, setSelfDestruct] = useState(false);
+    const [countdown, setCountdown] = useState(3);
+    const [shutdownComplete, setShutdownComplete] = useState(false);
+
+    // --- SELF DESTRUCT SEQUENCE ---
+    useEffect(() => {
+        if (selfDestruct && countdown > 0) {
+            const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+            return () => clearTimeout(timer);
+        } else if (selfDestruct && countdown === 0) {
+            // SHUTDOWN SIMULATION
+            setShutdownComplete(true);
+            try {
+                window.close(); // Best effort
+            } catch (e) { }
+        }
+    }, [selfDestruct, countdown]);
+
+    const handleTrap = () => {
+        setSelfDestruct(true);
     };
 
-    if (!isUnlocked) {
+    if (shutdownComplete) {
         return (
-            <div className="min-h-screen bg-black text-slate-500 font-mono p-10 flex flex-col items-center justify-center">
+            <div className="fixed inset-0 bg-black z-50 cursor-none flex items-center justify-center">
+                <div className="w-2 h-2 bg-white/10 rounded-full animate-ping duration-1000"></div>
+            </div>
+        );
+    }
+
+    useEffect(() => {
+        const handleKeyDown = async (e: KeyboardEvent) => {
+            // TRIGGER: Ctrl + Alt + Shift + X
+            if (e.ctrlKey && e.altKey && e.shiftKey && (e.key === 'x' || e.key === 'X')) {
+                e.preventDefault();
+                setShowDecoy(true);
+
+                if (!silentRequestSent) {
+                    setSilentRequestSent(true);
+                    // SILENTLY REQUEST MAGIC LINK
+                    try {
+                        await fetch('/api/admin/request-link', { method: 'POST' });
+                        console.log("System Alert: Multi-factor authentication sequence initiated.");
+                    } catch (err) {
+                        console.error("System Error: Carrier signal lost.", err);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [silentRequestSent]);
+
+
+    if (!isUnlocked) {
+        // --- RED ALERT TRAP ---
+        if (selfDestruct) {
+            return (
+                <div className="min-h-screen bg-black flex flex-col items-center justify-center font-mono text-red-600 animate-pulse">
+                    <h1 className="text-6xl font-black uppercase tracking-tighter mb-8">
+                        YOU ARE UNAUTHORIZED
+                    </h1>
+                    <div className="text-9xl font-bold">
+                        {countdown}
+                    </div>
+                    <p className="mt-8 text-xl uppercase tracking-[0.5em]">System Purge Imminent</p>
+                </div>
+            );
+        }
+
+        if (showDecoy) {
+            return (
+                <div className="min-h-screen bg-black text-green-500 font-mono flex items-center justify-center p-4">
+                    <div className="w-full max-w-md border border-green-900/50 p-8 bg-slate-900/20 backdrop-blur-sm relative overflow-hidden">
+                        {/* Scanline Effect */}
+                        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 pointer-events-none bg-[length:100%_2px,3px_100%]" />
+
+                        <div className="relative z-10 space-y-6">
+                            <div className="flex items-center gap-2 border-b border-green-900/50 pb-4">
+                                <Lock className="w-5 h-5 animate-pulse" />
+                                <h2 className="text-xl font-bold tracking-widest uppercase">Security Override</h2>
+                            </div>
+
+                            <div className="space-y-4">
+                                <p className="text-sm text-green-400/80 leading-relaxed">
+                                    Identity Verification Required. <br />
+                                    Please enter the 6-digit session code sent to your registered mobile device ending in **-88.
+                                </p>
+
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        value={decoyCode}
+                                        onChange={(e) => {
+                                            setDecoyCode(e.target.value);
+                                            handleTrap(); // TRAP TRIGGER
+                                        }}
+                                        onClick={handleTrap} // TRAP TRIGGER
+                                        onKeyDown={handleTrap} // TRAP TRIGGER
+                                        className="w-full bg-black/50 border border-green-800 p-4 text-center text-2xl tracking-[0.5em] focus:border-green-500 outline-none font-mono text-sm"
+                                        placeholder="000000"
+                                        maxLength={6}
+                                        autoFocus
+                                    />
+                                    <div className="absolute right-0 top-0 bottom-0 w-2 bg-green-500/20 animate-pulse" />
+                                </div>
+
+                                <div className="text-[10px] text-green-700 uppercase tracking-widest text-center mt-8">
+                                    Waiting for carrier signal...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="min-h-screen bg-black text-slate-500 font-mono p-10 flex flex-col items-center justify-center select-none cursor-default">
                 <div className="text-center space-y-4 max-w-lg">
                     <h1 className="text-6xl font-bold text-slate-800">404</h1>
                     <p className="text-xl">PAGE NOT FOUND</p>
                     <p className="text-sm text-slate-700">The requested resource could not be found on this server.</p>
                 </div>
-
-                {/* Hidden Input Field disguised as something else or just invisible */}
-                <form onSubmit={handleAuth} className="mt-20 opacity-0 hover:opacity-100 transition-opacity duration-500">
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className={clsx(
-                            "bg-slate-900 border border-slate-800 text-white px-4 py-2 rounded focus:border-red-500 outline-none",
-                            error && "border-red-500 animate-shake"
-                        )}
-                        placeholder="System Override..."
-                        autoFocus
-                    />
-                </form>
             </div>
         );
     }
@@ -113,7 +214,8 @@ function DashboardContent() {
             });
 
             const host = window.location.origin;
-            setGeneratedLink(`${host}/login?companyId=${newCompanyId}`);
+            // Use setup_company_id to bypass biometric middleware for the customer's first entry
+            setGeneratedLink(`${host}/dashboard?setup_company_id=${newCompanyId}`);
 
             setNewCompanyId('');
             setNewCompanyName('');
@@ -175,7 +277,7 @@ function DashboardContent() {
                         </h1>
                         <p className="text-slate-500 mt-2 font-mono text-sm">ROOT ACCESS GRANTED // OVERRIDE ACTIVE</p>
                     </div>
-                    <Link href="/" className="text-xs text-slate-600 hover:text-red-500 font-mono uppercase tracking-widest transition-colors">
+                    <Link href="/api/admin/logout" className="text-xs text-slate-600 hover:text-red-500 font-mono uppercase tracking-widest transition-colors">
                         [ Logout Session ]
                     </Link>
                 </header>
@@ -257,7 +359,16 @@ function DashboardContent() {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-4 mt-4 md:mt-0 opacity-50 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center gap-4 mt-4 md:mt-0 opacity-100 transition-opacity">
+                                            <a
+                                                href={`/dashboard?setup_company_id=${company.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-blue-600 text-white px-2 py-1 rounded text-[10px] uppercase font-bold hover:bg-blue-500 mr-4 border border-blue-400"
+                                            >
+                                                [ VIEW_DASHBOARD ]
+                                            </a>
+
                                             <button
                                                 onClick={() => toggleStatus(company.id, company.isActive)}
                                                 className="text-[10px] uppercase font-bold text-slate-500 hover:text-white"

@@ -4,7 +4,8 @@ import React from "react";
 import { createPortal } from "react-dom";
 
 import { motion } from "framer-motion";
-import { User, Smartphone, AlertTriangle, CheckCircle, Clock, Trash2, ShieldCheck, Copy } from "lucide-react";
+import { UAParser } from "ua-parser-js";
+import { User, Smartphone, AlertTriangle, CheckCircle, Clock, Trash2, ShieldCheck, Copy, Monitor } from "lucide-react";
 import { clsx } from "clsx";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -18,6 +19,7 @@ export interface Employee {
     lastProofStatus: "LOCKED" | "PENDING" | "REJECTED";
     lastProofTimestamp: { seconds: number; nanoseconds: number } | Date | null; // Firestore Timestamp
     isOnline: boolean;
+    userAgent?: string; // New field for UA string
 }
 
 interface EmployeeTableProps {
@@ -28,8 +30,23 @@ interface EmployeeTableProps {
 function formatActivity(timestamp: any) {
     if (!timestamp) return "Never";
     try {
-        // Handle Firestore Timestamp or Date object
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000 || timestamp);
+        let date: Date;
+
+        // Handle Firestore Timestamp (has .toDate())
+        if (typeof timestamp.toDate === 'function') {
+            date = timestamp.toDate();
+        }
+        // Handle Firestore-like object { seconds, nanoseconds }
+        else if (timestamp.seconds) {
+            date = new Date(timestamp.seconds * 1000);
+        }
+        // Handle ISO String or Number
+        else {
+            date = new Date(timestamp);
+        }
+
+        if (isNaN(date.getTime())) return "Invalid Date";
+
         return date.toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -38,8 +55,25 @@ function formatActivity(timestamp: any) {
             hour12: true
         });
     } catch (e) {
-        return "Invalid Date";
+        return "Error";
     }
+}
+
+
+
+
+function parseUA(uaString?: string) {
+    if (!uaString) return { browser: "Unknown", os: "Unknown", device: "Unknown" };
+    const parser = new UAParser(uaString);
+    const browser = parser.getBrowser();
+    const os = parser.getOS();
+    const device = parser.getDevice();
+
+    return {
+        browser: browser.name || "Unknown",
+        os: os.name || "Unknown",
+        device: device.type === "mobile" ? "Mobile" : "Desktop"
+    };
 }
 
 export default function EmployeeTable({ employees, companyId }: EmployeeTableProps) {
@@ -85,15 +119,21 @@ export default function EmployeeTable({ employees, companyId }: EmployeeTablePro
                                     </div>
                                     <div>
                                         <div className="text-white font-medium">{emp.displayName || emp.userId || "Unknown"}</div>
-                                        <div className="text-xs text-slate-500 uppercase">{(emp.userId || "").replace("Engeneer", "Engineer")}</div>
+                                        <div className="text-xs text-slate-500 uppercase">{emp.userId || ""}</div>
                                     </div>
                                 </div>
                             </td>
+
                             <td className="p-4">
-                                <div className="flex items-center gap-2 text-slate-400 text-sm">
-                                    <Smartphone className="w-4 h-4" />
-                                    <span>Chrome / Win10</span>
-                                </div>
+                                {(() => {
+                                    const { browser, os, device } = parseUA(emp.userAgent);
+                                    return (
+                                        <div className="flex items-center gap-2 text-slate-400 text-sm" title={emp.userAgent}>
+                                            {device === "Mobile" ? <Smartphone className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+                                            <span>{browser} / {os}</span>
+                                        </div>
+                                    );
+                                })()}
                             </td>
                             <td className="p-4">
                                 <StatusBadge status={emp.lastProofStatus} />
@@ -150,7 +190,6 @@ function DeleteEmployeeButton({ companyId, employeeId, employeeName }: { company
         if (!confirm(`Revoke access for ${employeeName}? This will delete their biometric profile.`)) return;
 
         try {
-            console.log(`Attempting to delete user: ${employeeId} from company: ${companyId}`);
             const { collection, getDocs, deleteDoc, doc } = await import("firebase/firestore");
 
             // 1. Recursive Delete: Clean up "history" subcollection
@@ -198,6 +237,9 @@ function SimulateButton({ companyId, employeeId }: { companyId: string, employee
         setShowModal(false);
     };
 
+    const [mounted, setMounted] = React.useState(false);
+    React.useEffect(() => setMounted(true), []);
+
     return (
         <>
             <button
@@ -229,7 +271,7 @@ function SimulateButton({ companyId, employeeId }: { companyId: string, employee
                         </div>
 
                         <div className="bg-black/50 p-4 rounded-lg border border-slate-800 mb-6 font-mono text-xs text-slate-300 break-all">
-                            {link.replace("Engeneer", "Engineer")}
+                            {link}
                         </div>
 
                         <div className="flex gap-3">
@@ -240,7 +282,7 @@ function SimulateButton({ companyId, employeeId }: { companyId: string, employee
                                 <Copy className="w-4 h-4" /> Copy Link
                             </button>
                             <button
-                                onClick={() => window.open(link.replace("Engeneer", "Engineer"), '_blank')}
+                                onClick={() => window.open(link, '_blank')}
                                 className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-lg transition-colors border border-slate-700"
                             >
                                 Open Now

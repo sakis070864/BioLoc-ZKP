@@ -3,14 +3,58 @@
 
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { createPortal } from "react-dom";
-import { HelpCircle, X, Shield, Users, Lock } from "lucide-react";
+import { HelpCircle, X, Shield, Users, Lock, Wrench, Copy } from "lucide-react";
 import { motion } from "framer-motion";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot, query, doc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, doc, updateDoc, getDocs } from "firebase/firestore";
 import SecuritySlider from "@/components/dashboard/SecuritySlider";
 import EmployeeTable, { Employee } from "@/components/dashboard/EmployeeTable";
+
+// --- TYPO FIX COMPONENT ---
+function FixTyposButton({ companyId }: { companyId: string }) {
+    const [status, setStatus] = useState<"IDLE" | "FIXING" | "DONE">("IDLE");
+    const [count, setCount] = useState(0);
+
+    const handleFix = async () => {
+        if (!confirm("Run scan to fix 'Engeneer' typos in this company?")) return;
+        setStatus("FIXING");
+        try {
+            const usersRef = collection(db, 'companies', companyId, 'users');
+            const snap = await getDocs(usersRef);
+            let fixed = 0;
+
+            for (const d of snap.docs) {
+                const data = d.data();
+                if (data.userId && data.userId.includes("Engeneer")) {
+                    const newId = data.userId.replace("Engeneer", "Engineer");
+                    await updateDoc(doc(db, 'companies', companyId, 'users', d.id), { userId: newId });
+                    fixed++;
+                }
+            }
+            setCount(fixed);
+            setStatus("DONE");
+            setTimeout(() => setStatus("IDLE"), 3000);
+        } catch (e) {
+            console.error(e);
+            alert("Error fixing typos. Check console.");
+            setStatus("IDLE");
+        }
+    };
+
+    return (
+        <button
+            onClick={handleFix}
+            disabled={status === "FIXING"}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-mono text-amber-500 bg-amber-950/20 border border-amber-500/30 rounded hover:bg-amber-950/40 transition-colors ml-4"
+        >
+            <Wrench size={14} className={status === "FIXING" ? "animate-spin" : ""} />
+            {status === "IDLE" && "FIX DB TYPOS"}
+            {status === "FIXING" && "SCANNING..."}
+            {status === "DONE" && `FIXED ${count}`}
+        </button>
+    );
+}
 
 import { Suspense } from 'react';
 
@@ -23,17 +67,37 @@ function DashboardContent() {
     // Fallback to google_inc only if session is missing (e.g. direct dev access)
     const [companyId, setCompanyId] = useState<string | null>(null);
 
-    useEffect(() => {
-        // Hydration Safe Initialization
-        if (typeof window !== "undefined") {
-            const urlId = new URLSearchParams(window.location.search).get("companyId");
-            const storedId = sessionStorage.getItem("zkp_company_id");
-            const initialId = urlId || storedId || "google_inc";
-            setCompanyId(initialId);
+    // Verify Session or Redirect (Client-Side Check)
+    // In a real app, this page should be protected by Middleware + Server Session
+    // checking HttpOnly cookies.
+    // For this fix, we will at least ensure we don't blindly trust the URL parameter
+    // if a session is already established for a DIFFERENT company.
 
-            if (urlId) {
-                if (urlId !== initialId) setCompanyId(urlId);
-                sessionStorage.setItem("zkp_company_id", urlId);
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            // 1. Check for Magic Link Setup
+            const params = new URLSearchParams(window.location.search);
+            const setupId = params.get("setup_company_id");
+
+            if (setupId) {
+                // Set Context
+                sessionStorage.setItem("zkp_company_id", setupId);
+                setCompanyId(setupId);
+
+                // Clean URL (remove the sensitive/ugly param)
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+                return;
+            }
+
+            // 2. Normal Flow
+            const storedId = sessionStorage.getItem("zkp_company_id");
+
+            if (storedId) {
+                setCompanyId(storedId);
+            } else {
+                // If context is missing, redirect to login to re-establish session context
+                window.location.href = "/secure-login";
             }
         }
     }, []);
@@ -97,26 +161,41 @@ function DashboardContent() {
     const [empName, setEmpName] = useState("");
     const [empId, setEmpId] = useState("");
 
-    const [magicLink, setMagicLink] = useState("Loading...");
+    const [magicLink, setMagicLink] = useState("Enter details...");
 
     useEffect(() => {
-        if (typeof window !== 'undefined' && companyId) {
-            const params = new URLSearchParams();
-            if (companyId) params.append('companyId', companyId);
-            if (empName) params.append('name', empName);
-            if (empId) params.append('id', empId.replace("Engeneer", "Engineer"));
-            setMagicLink(`${window.location.origin}/login?${params.toString()}`);
+        if (empName && empId) {
+            setMagicLink("Click to Generate Secure Link");
+        } else {
+            setMagicLink("Enter details...");
         }
-    }, [companyId, empName, empId]);
+    }, [empName, empId]);
 
-    const generateLink = () => {
-        // Kept for clipboard COPY logic which is an event handler (safe)
-        if (typeof window === 'undefined') return '';
-        const params = new URLSearchParams();
-        if (companyId) params.append('companyId', companyId);
-        if (empName) params.append('name', empName);
-        if (empId) params.append('id', empId.replace("Engeneer", "Engineer"));
-        return `${window.location.origin}/login?${params.toString()}`;
+    const generateLink = async () => {
+        if (!empName || !empId || !companyId) return '';
+
+        try {
+            setMagicLink("Generating...");
+            const res = await fetch('/api/magic-link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    companyId,
+                    name: empName,
+                    id: empId
+                })
+            });
+
+            if (!res.ok) throw new Error("Failed to generate link");
+
+            const data = await res.json();
+            setMagicLink(data.magicLink);
+            return data.magicLink;
+        } catch (e) {
+            console.error(e);
+            setMagicLink("Error generating link");
+            return '';
+        }
     };
 
     const [showHelp, setShowHelp] = useState(false);
@@ -177,10 +256,11 @@ function DashboardContent() {
                         <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                         LIVE ENCRYPTED
                     </p>
+                    {companyId && <FixTyposButton companyId={companyId} />}
                 </div>
             </header>
 
-            {showHelp && createPortal(
+            {showHelp && typeof document !== 'undefined' && createPortal(
                 <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-slate-900 border border-slate-700 rounded-xl max-w-2xl w-full shadow-2xl relative overflow-hidden">
                         {/* Header */}
@@ -320,11 +400,23 @@ function DashboardContent() {
                         </div>
 
                         <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 flex items-center gap-2 group cursor-pointer hover:border-cyan-500/50 transition-all"
-                            onClick={() => {
-                                const link = generateLink();
-                                if (link) {
-                                    navigator.clipboard.writeText(link);
-                                    alert("Magic Link copied!");
+                            onClick={async () => {
+                                if (!empName || !empId) {
+                                    alert("Please enter Employee Name and ID first.");
+                                    return;
+                                }
+
+                                // Only generate if not already generated or if we want to refresh?
+                                // Let's just generate on click if it says "Ready" or if it's not a URL yet.
+                                if (!magicLink.startsWith("http")) {
+                                    const link = await generateLink();
+                                    if (link) {
+                                        navigator.clipboard.writeText(link);
+                                        alert("Secure Magic Link copied!");
+                                    }
+                                } else {
+                                    navigator.clipboard.writeText(magicLink);
+                                    alert("Secure Magic Link copied!");
                                 }
                             }}
                         >
@@ -338,6 +430,35 @@ function DashboardContent() {
                     </div>
 
                     <SecuritySlider value={securityLevel} onChange={handleSecurityChange} />
+
+                    {/* NEW: Integration Snippet Panel */}
+                    <div className="glass-panel p-6 rounded-2xl border border-purple-500/30 bg-purple-950/10 mt-4">
+                        <h3 className="text-purple-400 text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <Lock size={14} /> Client Integration
+                        </h3>
+                        <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
+                            Paste this JSON snippet into your login button handler to secure your app.
+                        </p>
+                        <div className="bg-black/60 p-3 rounded-lg border border-slate-800 relative group">
+                            <pre className="text-[10px] text-purple-300 font-mono overflow-x-auto">
+{`{
+  "action": "ZKP_AUTH",
+  "companyId": "${companyId}",
+  "endpoint": "${typeof window !== 'undefined' ? window.location.origin : ''}/secure-login"
+}`}
+                            </pre>
+                            <button 
+                                onClick={() => {
+                                    const snippet = `{ "action": "ZKP_AUTH", "companyId": "${companyId}", "endpoint": "${window.location.origin}/secure-login" }`;
+                                    navigator.clipboard.writeText(snippet);
+                                    alert("Snippet copied!");
+                                }}
+                                className="absolute top-2 right-2 p-1 bg-slate-800 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                                <Copy size={12} className="text-slate-400" />
+                            </button>
+                        </div>
+                    </div>
 
                     {/* NEW: Training Repetitions Control */}
                     <div className="glass-panel p-6 rounded-2xl border border-slate-800 mt-4">

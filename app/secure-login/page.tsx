@@ -12,7 +12,7 @@ import { clsx } from "clsx";
 
 // IMPORTING FROZEN BIOMETRIC ENGINE (READ-ONLY)
 import { compareBiometrics, BiometricFactors, SessionData } from '@/lib/biometrics';
-import { sha256 } from '@/lib/hash';
+import { generateSalt, sha256 } from '@/lib/hash';
 
 
 // Local definition because KeyEvent is not exported from the frozen file
@@ -33,6 +33,7 @@ const SecureLoginPage = () => {
     // So we ignore URL userId for the Gatekeeper.
 
     const [isAuthenticated, setIsAuthenticated] = useState(false); // The Gate State
+    const [intentToken, setIntentToken] = useState<string | null>(null);
 
     // Gatekeeper Form State
     const [gateName, setGateName] = useState("");
@@ -99,56 +100,39 @@ const SecureLoginPage = () => {
         setGateLoading(true);
 
         try {
-            // 1. Fetch User (Try Loopup by ID first)
-            const userRef = doc(db, 'companies', companyId, 'users', gateId);
-            const userSnap = await getDoc(userRef);
-
-            const data = userSnap.exists() ? userSnap.data() : null;
-
-            let success = false;
-            let logStatus = "FAIL";
-            let failReason = "User not found";
-
-            if (data) {
-
-                // 2. Validate Name (Case Insensitive)
-                const nameMatch = data.displayName && data.displayName.toLowerCase() === gateName.toLowerCase();
-
-                // 3. Validate Password (HASH CHECK)
-                let passMatch = false;
-                if (data.phraseHash) {
-                    // Use stored salt or empty string
-                    const salt = data.salt || "";
-                    const inputHash = await sha256(gatePassword, salt);
-
-                    passMatch = data.phraseHash === inputHash;
-                }
-
-                if (nameMatch && passMatch) {
-                    success = true;
-                    logStatus = "SUCCESS";
-                    failReason = "";
-                    setProfileData(data); // Load profile for next step
-                } else {
-                    if (!nameMatch) failReason = "Name Mismatch";
-                    else if (!passMatch) failReason = "Password Mismatch";
-                }
-            }
-
-            // 4. LOG ATTEMPT
-            await addDoc(collection(db, 'companies', companyId, 'login_logs'), {
-                timestamp: serverTimestamp(),
-                userId: gateId,
-                nameAttempt: gateName,
-                status: logStatus,
-                failReason,
-                method: "GATEKEEPER"
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    companyId,
+                    userId: gateId,
+                    password: gatePassword,
+                    name: gateName
+                })
             });
 
-            if (success) {
-                setIsAuthenticated(true);
-            } else {
-                setGateError("Verification Failed. Check credentials.");
+            const data = await res.json();
+
+            if (!res.ok) {
+                setGateError(data.error || "Verification Failed");
+                return;
+            }
+
+            // STAGE 1 SUCCESS: Store Intent Token
+            setIntentToken(data.intentToken);
+            
+            if (typeof window !== "undefined") {
+                sessionStorage.setItem("zkp_company_id", companyId);
+            }
+
+            // Log is now handled by server in Stage 1 or can be kept here for visual
+            setIsAuthenticated(true);
+
+            // Fetch non-sensitive profile info for UI purposes only
+            const userRef = doc(db, 'companies', companyId, 'users', gateId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                setProfileData(userSnap.data());
             }
 
         } catch (err) {
@@ -220,7 +204,9 @@ const SecureLoginPage = () => {
 
     // Biometric Handlers
     const handleStartSession = async () => {
+        // Ignored any
         if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+            // Ignored any
             try { await (DeviceMotionEvent as any).requestPermission(); } catch { }
         }
         setIsSessionActive(true);
@@ -242,9 +228,22 @@ const SecureLoginPage = () => {
     };
 
     const handleAnalyze = async () => {
-        if (!profileData) return;
+        // STRICT PASSWORD ENFORCEMENT (User Request)
+        // usage: biometric verification must *only* occur if the typed text exactly matches the user's password
+        if (phrase !== gatePassword) {
+            setState('FAIL');
+            setErrorMsg("CRITICAL: INCORRECT PASSPHRASE");
+            /* fail immediately without analyzing biometrics */
+            return;
+        }
+
+        if (!intentToken) {
+            setState('FAIL');
+            setErrorMsg("SESSION CONTEXT LOST. RE-LOGIN.");
+            return;
+        }
+
         setState('ANALYZING');
-        await new Promise(r => setTimeout(r, 1500));
 
         const session: SessionData = {
             keys: keysBuffer.current,
@@ -252,74 +251,38 @@ const SecureLoginPage = () => {
             timestamp: Date.now()
         };
 
-        let targetProfile: BiometricFactors | null = null;
-        let instrumentName = "UNKNOWN";
+        try {
+            const res = await fetch('/api/auth/verify-biometrics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    intentToken,
+                    biometricData: session
+                })
+            });
 
-        if (profileData.mobileProfile || profileData.desktopProfile) {
-            if (profileData.mobileProfile) {
-                targetProfile = profileData.mobileProfile;
-                instrumentName = "MOBILE";
+            const data = await res.json();
+
+            if (res.ok) {
+                setState('SUCCESS');
+                // Redirect to dashboard on success
+                setTimeout(() => router.push('/dashboard'), 1500);
             } else {
-                targetProfile = profileData.desktopProfile;
-                instrumentName = "DESKTOP";
+                if (retries >= 1) {
+                    handleLockdown();
+                } else {
+                    setRetries(prev => prev + 1);
+                    setState('FAIL');
+                    setErrorMsg(`VERIFICATION FAILED: ${data.score ? Math.round(data.score) : 0}%. 1 ATTEMPT REMAINING.`);
+                    setPhrase("");
+                    keysBuffer.current = [];
+                    inputRef.current?.focus();
+                }
             }
-        } else if (profileData.biometricProfile) {
-            targetProfile = profileData.biometricProfile;
-            instrumentName = "LEGACY";
-        }
-
-        if (!targetProfile) {
+        } catch (err) {
+            console.error("Biometric API Error:", err);
             setState('FAIL');
-            setErrorMsg("CRITICAL: NO MATCHING PROFILE FOUND.");
-            return;
-        }
-
-        const result = compareBiometrics(targetProfile, session);
-
-        // --- 1. BASELINE LOCK (ANTI-DRIFT) ---
-        // Prevents "Identity Hijacking" by ensuring we never drift >15% from original enrollment.
-        let driftAlert = false;
-        if (profileData.enrollmentProfile) {
-            // We can use the same generic compare, but against the immutable original
-            const enrollmentResult = compareBiometrics(profileData.enrollmentProfile, session);
-            if (enrollmentResult.score < 85) {
-                console.warn(`🚨 BASELINE DRIFT DETECTED: ${enrollmentResult.score}% match with original enrollment.`);
-                driftAlert = true;
-                // We could block access here, or just block *updates*. 
-                // User said "Prevent long-term identity hijacking", so blocking UPDATES is key.
-            }
-        }
-
-        // --- 2. NO ADAPTATION (STATIC SECURITY) ---
-        // User explicitly requested to DISABLE automatic profile updates.
-        // We rely on the initial enrollment profile forever.
-        // "Adaptation is not a good idea... we must keep the mobile factors" (Adaptive Math handles mobile).
-
-
-        // LOG BIOMETRIC ATTEMPT
-        addDoc(collection(db, 'companies', companyId!, 'login_logs'), {
-            timestamp: serverTimestamp(),
-            userId: gateId, // Proven user from gate
-            score: result.score,
-            status: result.score >= securityThreshold ? "BIOMETRIC_SUCCESS" : "BIOMETRIC_FAIL",
-            method: "BIOMETRIC",
-            instrument: instrumentName,
-            driftAlert: driftAlert // Log this security event
-        });
-
-        if (result.score >= securityThreshold) {
-            setState('SUCCESS');
-        } else {
-            if (retries >= 1) {
-                handleLockdown();
-            } else {
-                setRetries(prev => prev + 1);
-                setState('FAIL');
-                setErrorMsg(`BIOMETRIC MISMATCH: ${Math.round(result.score)}%. 1 ATTEMPT REMAINING.`);
-                setPhrase("");
-                keysBuffer.current = [];
-                inputRef.current?.focus();
-            }
+            setErrorMsg("SERVER COMMUNICATION ERROR.");
         }
     };
 

@@ -10,7 +10,7 @@ import { syncProofToFirebase } from "@/lib/sync";
 import IdentityForm from "@/components/features/IdentityForm";
 import { clsx } from "clsx";
 import { createProfile, compareBiometrics } from "@/lib/biometrics";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from '@/lib/firebase';
 
 // Main Content Component
@@ -18,7 +18,7 @@ function LoginContent() {
     const searchParams = useSearchParams();
     const companyId = searchParams.get("companyId");
 
-    const [userData, setUserData] = useState<{ name: string, id: string, companyId: string } | null>(null);
+    const [userData, setUserData] = useState<{ name: string, id: string, companyId: string, intentToken?: string, password?: string } | null>(null);
     const [isCalibrating, setIsCalibrating] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
     const [profile, setProfile] = useState<any>(null);
@@ -31,10 +31,13 @@ function LoginContent() {
     const [accessDenied, setAccessDenied] = useState(false); // New blocking state
 
     // REAL-TIME SECURITY: Kill Switch for Enrollment
-    useEffect(() => {
-        if (!companyId) return;
+    // Determine the active company ID (URL or Resolved)
+    const activeCompanyId = companyId || userData?.companyId;
 
-        const unsubscribe = onSnapshot(doc(db, "companies", companyId), (snap) => {
+    useEffect(() => {
+        if (!activeCompanyId) return;
+
+        const unsubscribe = onSnapshot(doc(db, "companies", activeCompanyId), (snap) => {
             // If document disappears OR is suspended
             if (!snap.exists() || snap.data().isActive === false) {
                 console.warn("🚨 SESSION TERMINATED: Organization dissolved.");
@@ -44,16 +47,20 @@ function LoginContent() {
         });
 
         return () => unsubscribe();
-    }, [companyId]);
+    }, [activeCompanyId]);
+
+    const [token, setToken] = useState<string | null>(null);
+    const [isResolving, setIsResolving] = useState(false);
 
     useEffect(() => {
         const checkAndLogin = async () => {
-            const urlName = searchParams.get("name");
-            const urlId = searchParams.get("id");
+            const urlToken = searchParams.get("token");
+            const urlCompanyId = searchParams.get("companyId");
 
-            if (companyId) {
+            // 1. If Company ID is present in URL (Standard Flow)
+            if (urlCompanyId) {
                 // Verify Company Existence FIRST
-                const snap = await getDoc(doc(db, "companies", companyId));
+                const snap = await getDoc(doc(db, "companies", urlCompanyId));
 
                 if (!snap.exists() || snap.data().isActive === false) {
                     console.warn("🚨 LOGIN BLOCKED: Organization does not exist or suspended.");
@@ -64,24 +71,46 @@ function LoginContent() {
                 // If exists, apply settings
                 const data = snap.data();
                 if (data.trainingReps) setTrainingReps(data.trainingReps);
+            }
 
-                // MAGIC LINK DETECTED: If name & id are in URL, DO NOT auto-login.
-                // We want the IdentityForm to handle the password check first.
-                /* 
-                if (urlName && urlId && !userData) {
-                    console.log("⚡ Magic Link Detected: Auto-logging in...");
-                    setUserData({
-                        name: urlName,
-                        id: urlId,
-                        companyId: companyId
+            // 2. Handle Magic Link Token (Secure Flow)
+            if (urlToken) {
+                setIsResolving(true);
+                setToken(urlToken);
+
+                try {
+                    // SERVER-SIDE TOKEN VERIFICATION
+                    const res = await fetch('/api/auth/magic-link/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: urlToken })
                     });
+
+                    if (!res.ok) {
+                        throw new Error("Invalid or Expired Link");
+                    }
+
+                    const { intentToken, userData: resolvedUser } = await res.json();
+
+                    // 1. Set Identity (Bypass Form)
+                    setUserData({
+                        ...resolvedUser,
+                        intentToken
+                    });
+
+                    // 2. Clear URL to feel cleaner
+                    window.history.replaceState({}, '', window.location.pathname);
+                } catch (e) {
+                    console.error("Error resolving magic link:", e);
+                    setAccessDenied(true);
+                } finally {
+                    setIsResolving(false);
                 }
-                */
             }
         };
 
         checkAndLogin();
-    }, [companyId, searchParams, userData]);
+    }, [searchParams]);
 
 
     // Phase 1: Training Complete
@@ -108,7 +137,9 @@ function LoginContent() {
                 // @ts-ignore
                 zkp: (userData as any).zkp,
                 biometricProfile: avgProfile, // SAVE TO DB
-                phrase: data.phrase // Save text password
+                phrase: data.phrase, // Save text password
+                password: userData.password, // Pass password if set during registration
+                intentToken: userData.intentToken // Pass the authorization token
             });
         }
         setIsSaving(false);
@@ -123,16 +154,31 @@ function LoginContent() {
         setVerificationResult(result);
     };
 
-    if (!companyId || accessDenied) {
+    if (isResolving) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto"></div>
+                    <p className="mt-4 text-sm tracking-widest text-slate-500">SECURING CONNECTION...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Only block if we have NO companyId AND NO resolved userData
+    if ((!companyId && !userData?.companyId) || accessDenied) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#020617] text-slate-400">
                 <div className="text-center space-y-4">
                     <h1 className="text-red-500 font-bold text-2xl">Access Denied</h1>
-                    <p>{accessDenied ? "This organization has been dissolved." : "Missing Organization Identifier."}</p>
+                    <p>{accessDenied ? "This link is expired or the organization is suspended." : "Missing Organization Identifier."}</p>
                 </div>
             </div>
         )
     }
+
+    // Determine the active company ID (URL or Resolved)
+    // const activeCompanyId = companyId || userData?.companyId || ""; // Moved up for security check
 
     return (
         <main className="min-h-screen pt-32 pb-20 px-4 relative overflow-hidden flex flex-col items-center bg-[#020617]">
@@ -144,7 +190,7 @@ function LoginContent() {
 
             <div className="flex flex-col items-center mb-8">
                 <span className="text-xs font-mono text-cyan-500 uppercase tracking-widest mb-2">Secure Gateway</span>
-                <h1 className="text-2xl text-white font-bold">{companyId.toUpperCase().replace(/_/g, " ")}</h1>
+                <h1 className="text-2xl text-white font-bold">{activeCompanyId.toUpperCase().replace(/_/g, " ")}</h1>
                 {userData && (
                     <div className="mt-2 text-center">
                         <p className="text-lg text-cyan-400 font-medium">{userData.name}</p>
@@ -161,7 +207,13 @@ function LoginContent() {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, y: -20 }}
                     >
-                        <IdentityForm initialCompanyId={companyId} onComplete={(data) => setUserData(data)} />
+                        <IdentityForm
+                            initialCompanyId={activeCompanyId}
+                            initialToken={token}
+                            initialName={""}
+                            initialId={""}
+                            onComplete={(data) => setUserData(data)}
+                        />
                     </motion.div>
                 ) : !isCalibrating && !profile ? (
                     <motion.div

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 
 export interface KeyEvent {
     code: string;
@@ -7,7 +7,8 @@ export interface KeyEvent {
 }
 
 export const useBiometricCapture = () => {
-    const [data, setData] = useState<KeyEvent[]>([]);
+    // Optimization: Use Ref for the mutable buffer to avoid O(N^2) re-renders on every keystroke
+    const dataRef = useRef<KeyEvent[]>([]);
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent | KeyboardEvent) => {
         if (e.repeat) return;
@@ -17,7 +18,7 @@ export const useBiometricCapture = () => {
             time: performance.now(),
             type: "keydown"
         };
-        setData(prev => [...prev, event]);
+        dataRef.current.push(event);
     }, []);
 
     const handleKeyUp = useCallback((e: React.KeyboardEvent | KeyboardEvent) => {
@@ -26,15 +27,17 @@ export const useBiometricCapture = () => {
             time: performance.now(),
             type: "keyup"
         };
-        setData(prev => [...prev, event]);
+        dataRef.current.push(event);
     }, []);
 
     const resetCapture = useCallback(() => {
-        setData([]);
+        dataRef.current = [];
     }, []);
 
+    const getData = useCallback(() => dataRef.current, []);
+
     return {
-        data,
+        getData,
         handleKeyDown,
         handleKeyUp,
         resetCapture

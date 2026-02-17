@@ -128,9 +128,21 @@ export default function AdminDashboard() {
         setLoading(true);
 
         try {
-            // Generate the Login Link
-            const host = window.location.origin;
-            const finalLink = `${host}/dashboard?companyId=${newCompanyId}`;
+            // Generate Magic Link via API
+            let finalLink = "";
+            try {
+                const res = await fetch('/api/admin/create-link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyId: newCompanyId })
+                });
+                const d = await res.json();
+                finalLink = d.url;
+            } catch (e) {
+                console.error("Link Gen Failed", e);
+                // Fallback to direct link
+                finalLink = `${window.location.origin}/dashboard?companyId=${newCompanyId}`;
+            }
 
             // Create the Company Document in Firestore
             await setDoc(doc(db, 'companies', newCompanyId), {
@@ -139,7 +151,7 @@ export default function AdminDashboard() {
                 createdAt: serverTimestamp(),
                 lastPaymentDate: serverTimestamp(), // Default: Just paid
                 securityThreshold: 85, // Default setting
-                dashboardUrl: finalLink // SAVE THE LINK AS REQUESTED
+                dashboardUrl: finalLink
             });
 
             setGeneratedLink(finalLink);
@@ -311,17 +323,17 @@ export default function AdminDashboard() {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="text-xs text-slate-500 font-medium ml-1">Company Name</label>
+                                <label className="text-xs text-slate-500 font-medium ml-1">Department Name</label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. Tesla Motors"
+                                    placeholder="e.g. Sales Department"
                                     value={newCompanyName}
                                     onChange={(e) => setNewCompanyName(e.target.value)}
                                     className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-cyan-500 outline-none transition-all"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-slate-500 font-medium ml-1">Company ID (Slug)</label>
+                                <label className="text-xs text-slate-500 font-medium ml-1">Department ID (Slug)</label>
                                 <input
                                     type="text"
                                     placeholder="e.g. tesla_corp"
@@ -520,11 +532,25 @@ export default function AdminDashboard() {
 
                                                 {/* Get Link Button */}
                                                 <button
-                                                    onClick={(e) => {
+                                                    onClick={async (e) => {
                                                         e.stopPropagation();
-                                                        // Use saved link if available, otherwise generate it
-                                                        const url = company.dashboardUrl || `${window.location.origin}/dashboard?companyId=${company.id}`;
-                                                        setLinkModal({ name: company.displayName, url });
+                                                        // Always generate a fresh secure link
+                                                        try {
+                                                            const res = await fetch('/api/admin/create-link', {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ companyId: company.id })
+                                                            });
+                                                            const data = await res.json();
+                                                            if (data.url) {
+                                                                setLinkModal({ name: company.displayName, url: data.url });
+                                                            } else {
+                                                                alert("Failed to generate link");
+                                                            }
+                                                        } catch (err) {
+                                                            console.error(err);
+                                                            alert("Error generating link");
+                                                        }
                                                     }}
                                                     className="p-2 text-slate-500 hover:text-cyan-400 hover:bg-cyan-950/30 rounded-lg transition-colors"
                                                     title="Get Dashboard Link"

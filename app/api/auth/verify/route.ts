@@ -17,14 +17,14 @@ export async function POST(req: Request) {
 
         if (!challengeSnap.exists()) {
             // Fails if nonce was never issued or already deleted
-            console.warn(`🚨 SECURITY ALERT: Invalid Nonce Attempt (${nonce})`);
+            console.warn(`🚨 SECURITY ALERT: Invalid Nonce Attempt`);
             return NextResponse.json({ error: "Invalid security challenge" }, { status: 403 });
         }
 
         const data = challengeSnap.data();
 
         if (data.status === "USED") {
-            console.error(`🚨 SECURITY CRITICAL: Replay Attack Detected with Nonce (${nonce})`);
+            console.error(`🚨 SECURITY CRITICAL: Replay Attempt Detected`);
             return NextResponse.json({ error: "REPLAY DETECTED: This session is expired." }, { status: 403 });
         }
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         });
 
         // 3. Verify Zero-Knowledge Proof
-        const isValid = zkp.verifyProof(commitment, proof, nonce);
+        const isValid = await zkp.verifyProof(commitment, proof, nonce);
 
         if (isValid) {
             console.log(`✅ ZKP Verified for Nonce ${nonce}`);

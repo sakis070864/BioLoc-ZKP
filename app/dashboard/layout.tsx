@@ -20,17 +20,31 @@ function DashboardLayoutContent({
 
     const [companyId, setCompanyId] = useState<string | null>(null);
     const [isSuspended, setIsSuspended] = useState(false);
+    const [departmentName, setDepartmentName] = useState<string>("");
 
     useEffect(() => {
         // Initial load of company ID - Client Side Only
         const storedId = sessionStorage.getItem("zkp_company_id");
+
+        // Check for Setup Param (Magic Link)
+        const setupId = new URLSearchParams(window.location.search).get("setup_company_id");
+
         if (urlCompanyId) {
             sessionStorage.setItem("zkp_company_id", urlCompanyId);
             setCompanyId(urlCompanyId);
+        } else if (setupId) {
+            // Handle Magic Link Setup
+            sessionStorage.setItem("zkp_company_id", setupId);
+            setCompanyId(setupId);
+            // Clean URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
         } else if (storedId) {
             setCompanyId(storedId);
         } else {
-            router.push("/login");
+            // Check if we are already securely traversing?
+            // If strictly no ID, redirect to secure login
+            router.push("/secure-login");
         }
     }, [urlCompanyId, router]);
 
@@ -39,7 +53,9 @@ function DashboardLayoutContent({
         if (!companyId) return;
         const unsubscribe = onSnapshot(doc(db, "companies", companyId), (docSnap) => {
             if (docSnap.exists()) {
-                setIsSuspended(docSnap.data().isActive === false);
+                const data = docSnap.data();
+                setIsSuspended(data?.isActive === false);
+                if (data?.displayName) setDepartmentName(data.displayName);
             } else {
                 // KILL SWITCH: Document Deleted while user is active
                 console.warn(`🚨 Security Alert: Organization ${companyId} has been deleted. Terminating session.`);
@@ -90,7 +106,7 @@ function DashboardLayoutContent({
                                 {isSuspended ? "Suspended" : "Healthy"}
                             </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{companyId}</p>
+                        <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{departmentName || companyId}</p>
                     </div>
                 </div>
 

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useBiometricCapture } from "@/hooks/useBiometricCapture";
 import { useMouseTracker } from "@/hooks/useMouseTracker";
 import { useDeviceSensors } from "@/hooks/useDeviceSensors";
-import { analyzeBiometric30, SessionData } from "@/lib/biometrics";
+import { SessionData } from "@/lib/biometrics";
 import { clsx } from "clsx";
 import RhythmVisualizer from "@/components/ui/RhythmVisualizer";
 
@@ -30,7 +30,7 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
     const [isTyping, setIsTyping] = useState(false);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const { data, handleKeyDown, handleKeyUp, resetCapture } = useBiometricCapture();
+    const { getData, handleKeyDown, handleKeyUp, resetCapture } = useBiometricCapture();
     const { mouseData, resetMouse } = useMouseTracker(true);
     const { sensorData, resetSensors } = useDeviceSensors(true);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +87,7 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
 
         // Capture the current session data
         const currentSession: SessionData = {
-            keys: [...data],
+            keys: [...getData()],
             mouse: [...mouseData],
             sensors: [...sensorData],
             startTime: startTimeRef.current, // Added: Reference start time for this rep
@@ -132,11 +132,11 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
                     <label className="text-xs font-bold text-cyan-500 uppercase tracking-widest mb-2 block">Set Password / Phrase</label>
                     <input
                         ref={inputRef}
-                        type="text"
+                        type="password"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:border-cyan-500 outline-none transition-colors"
-                        placeholder="e.g. MySecretPhrase123"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:border-cyan-500 outline-none transition-colors font-mono tracking-widest"
+                        placeholder="••••••••••••"
                         onKeyDown={(e) => e.key === 'Enter' && confirmPassword()}
                     />
                 </div>
@@ -176,10 +176,12 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
             <div className="relative w-full max-w-lg">
                 <input
                     ref={inputRef}
-                    type="text"
+                    type="password"
                     value={inputValue}
                     onChange={handleChange}
+                    // Ignored any
                     onKeyDown={handleKeyDown as any}
+                    // Ignored any
                     onKeyUp={handleKeyUp as any}
                     className={clsx(
                         "w-full bg-slate-900/50 border-2 rounded-xl px-6 py-4 text-center text-xl text-white font-mono tracking-widest focus:outline-none transition-all duration-300",
@@ -187,7 +189,7 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
                         feedback === "good" && "border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]",
                         feedback === "bad" && "border-red-500 animate-shake"
                     )}
-                    placeholder="Start typing..."
+                    placeholder="Type rhythmically..."
                     autoComplete="off"
                     spellCheck="false"
                 />

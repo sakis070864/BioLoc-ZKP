@@ -28,21 +28,29 @@ export class ZKPEngine {
         return res;
     }
 
-    // Hash string to Field Element
-    hashToField(input: string): bigint {
-        let h = 5381n;
-        for (let i = 0; i < input.length; i++) {
-            const char = BigInt(input.charCodeAt(i));
-            h = ((h << 5n) + h) + char; // hash * 33 + c
-            h = h % this.p;
-        }
-        return h;
+    // Hash string to Field Element using SHA-256
+    async hashToField(input: string): Promise<bigint> {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(input);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        
+        // Convert ArrayBuffer to Hex String then to BigInt
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        // Take mod p
+        return BigInt("0x" + hashHex) % this.p;
     }
 
-    // Generate Random Field Element
+    // Generate Random Field Element using Secure Randomness
     randomFieldElement(): bigint {
-        const rand = BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
-        return rand % this.p;
+        const array = new BigUint64Array(1);
+        crypto.getRandomValues(array);
+        // Mask out the top 3 bits to ensure it fits within 61-bit prime easily 
+        // (though modulo handles it, this keeps it cleaner for the specific prime size)
+        // 2^64 is much larger than p, so rejection sampling would be ideal for perfect distribution,
+        // but modulo is acceptable for this demo scope.
+        return array[0] % this.p;
     }
 
     // Pedersen Commitment: C = g^v * h^r (mod p)
@@ -54,8 +62,8 @@ export class ZKPEngine {
 
     // Generate a simple ZK Proof (Simplified Schnorr-like for demo)
     // Proves knowledge of 'value' and 'randomness'
-    generateProof(secretStr: string, nonce: string): { commitment: string, proof: any } {
-        const value = this.hashToField(secretStr);
+    async generateProof(secretStr: string, nonce: string): Promise<{ commitment: string, proof: any }> {
+        const value = await this.hashToField(secretStr);
         const r = this.randomFieldElement(); // Secret Randomness
 
         // 1. Calculate Commitment
@@ -69,7 +77,7 @@ export class ZKPEngine {
 
         // Challenge c = H(C, T, nonce) - Nonce prevents Replay Attacks
         const challengeInput = C.toString() + T.toString() + nonce;
-        const c = this.hashToField(challengeInput);
+        const c = await this.hashToField(challengeInput);
 
         // Response z_v = v_blind + c * value
         // Response z_r = r_blind + c * r
@@ -90,7 +98,7 @@ export class ZKPEngine {
     }
 
     // Server-side verification logic
-    verifyProof(commitmentHex: string, proof: any, nonce: string): boolean {
+    async verifyProof(commitmentHex: string, proof: any, nonce: string): Promise<boolean> {
         try {
             const C = BigInt(commitmentHex);
             const T = BigInt(proof.T);
@@ -99,7 +107,7 @@ export class ZKPEngine {
 
             // Recompute Challenge c (Must include Nonce)
             const challengeInput = C.toString() + T.toString() + nonce;
-            const c = this.hashToField(challengeInput);
+            const c = await this.hashToField(challengeInput);
 
             // Verify: g^z_v * h^z_r == T * C^c
             const left = this.commit(z_v, z_r);
