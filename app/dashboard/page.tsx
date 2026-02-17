@@ -182,15 +182,18 @@ function DashboardContent() {
                 body: JSON.stringify({
                     companyId,
                     name: empName,
-                    id: empId
+                    id: empId,
+                    origin: window.location.origin // Send current origin (e.g. localhost:3003)
                 })
             });
 
             if (!res.ok) throw new Error("Failed to generate link");
 
             const data = await res.json();
-            setMagicLink(data.magicLink);
-            return data.magicLink;
+            // Force client-side construction to ensure correct port (bypassing any server-side misdetection)
+            const finalLink = `${window.location.origin}/enroll?token=${data.token}`;
+            setMagicLink(finalLink);
+            return finalLink;
         } catch (e) {
             console.error(e);
             setMagicLink("Error generating link");
@@ -441,13 +444,13 @@ function DashboardContent() {
                         </p>
                         <div className="bg-black/60 p-3 rounded-lg border border-slate-800 relative group">
                             <pre className="text-[10px] text-purple-300 font-mono overflow-x-auto">
-{`{
+                                {`{
   "action": "ZKP_AUTH",
   "companyId": "${companyId}",
   "endpoint": "${typeof window !== 'undefined' ? window.location.origin : ''}/secure-login"
 }`}
                             </pre>
-                            <button 
+                            <button
                                 onClick={() => {
                                     const snippet = `{ "action": "ZKP_AUTH", "companyId": "${companyId}", "endpoint": "${window.location.origin}/secure-login" }`;
                                     navigator.clipboard.writeText(snippet);

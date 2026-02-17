@@ -28,7 +28,7 @@
  */
 export function getPublicDomain(): string {
     const domain = process.env.NEXT_PUBLIC_APP_DOMAIN;
-    
+
     // Fallback for local development if variable is not set
     if (!domain) {
         if (process.env.NODE_ENV === 'development') {
@@ -39,7 +39,7 @@ export function getPublicDomain(): string {
         console.warn('[ZKP Link Generator] NEXT_PUBLIC_APP_DOMAIN is missing. Defaulting to localhost.');
         return 'http://localhost:3000';
     }
-    
+
     return domain;
 }
 
@@ -54,9 +54,9 @@ export function getPublicDomain(): string {
  * const link = generateMagicLink(token);
  * // Returns: https://zkp.company.com/login?token=mlk_abc123def456...
  */
-export function generateMagicLink(token: string): string {
-    const publicDomain = getPublicDomain();
-    return `${publicDomain}/login?token=${token}`;
+export function generateMagicLink(token: string, origin?: string): string {
+    const publicDomain = origin || getPublicDomain();
+    return `${publicDomain}/enroll?token=${token}`;
 }
 
 /**
