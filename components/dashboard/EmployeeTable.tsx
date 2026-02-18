@@ -27,18 +27,19 @@ interface EmployeeTableProps {
     companyId: string;
 }
 
-function formatActivity(timestamp: any) {
+function formatActivity(timestamp: unknown) {
     if (!timestamp) return "Never";
     try {
         let date: Date;
+        const ts = timestamp as { toDate?: () => Date; seconds?: number };
 
         // Handle Firestore Timestamp (has .toDate())
-        if (typeof timestamp.toDate === 'function') {
-            date = timestamp.toDate();
+        if (typeof ts.toDate === 'function') {
+            date = ts.toDate();
         }
         // Handle Firestore-like object { seconds, nanoseconds }
-        else if (timestamp.seconds) {
-            date = new Date(timestamp.seconds * 1000);
+        else if (ts.seconds) {
+            date = new Date(ts.seconds * 1000);
         }
         // Handle ISO String or Number
         else {

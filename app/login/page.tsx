@@ -21,7 +21,7 @@ function LoginContent() {
     const [userData, setUserData] = useState<{ name: string, id: string, companyId: string, intentToken?: string, password?: string } | null>(null);
     const [isCalibrating, setIsCalibrating] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<{ rawData: unknown[]; phrase: string } | null>(null);
     const [computedProfile, setComputedProfile] = useState<number[]>([]);
     const [verificationResult, setVerificationResult] = useState<{ score: number, distance: number } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -114,16 +114,16 @@ function LoginContent() {
 
 
     // Phase 1: Training Complete
-    const handleCalibrationComplete = async (data: any) => {
+    const handleCalibrationComplete = async (data: unknown) => {
         setIsSaving(true);
         await new Promise(r => setTimeout(r, 800));
 
-        const trainingData = data.rawData;
+        const trainingData = (data as { rawData: any[] }).rawData;
         // Fix: Pass full session objects (with sensors) now that createProfile handles it
         const avgProfile = createProfile(trainingData);
 
         setComputedProfile(avgProfile as any);
-        setProfile(data);
+        setProfile(data as { rawData: unknown[]; phrase: string });
 
         // Sync to Firebase
         if (userData) {
@@ -146,9 +146,9 @@ function LoginContent() {
     };
 
     // Phase 2: Verification Complete
-    const handleVerificationComplete = async (data: any) => {
+    const handleVerificationComplete = async (data: unknown) => {
         setIsVerifying(false);
-        const loginSession = data.rawData[0];
+        const loginSession = (data as { rawData: any[] }).rawData[0];
         // Fix: Pass full session object
         const result = compareBiometrics(computedProfile as any, loginSession);
         setVerificationResult(result);

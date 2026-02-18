@@ -43,8 +43,8 @@ export default function AiGatekeeper({ onVerified, onClose }: AiGatekeeperProps)
                     throw new Error(data.error);
                 }
                 setMessages([{ role: "model", content: data.reply }]);
-            } catch (err: any) {
-                setMessages([{ role: "model", content: `ERROR: ${err.message || "NEURAL LINK SEVERED."}` }]);
+            } catch (err: unknown) {
+                setMessages([{ role: "model", content: `ERROR: ${(err as Error).message || "NEURAL LINK SEVERED."}` }]);
             } finally {
                 setIsLoading(false);
             }

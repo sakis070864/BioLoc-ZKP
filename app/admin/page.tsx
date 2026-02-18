@@ -23,7 +23,7 @@ interface CompanyUser {
     displayName?: string;
     employeeId?: string;
     createdAt?: Timestamp;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 export default function AdminDashboard() {

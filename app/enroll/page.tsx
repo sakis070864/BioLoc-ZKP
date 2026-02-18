@@ -113,11 +113,11 @@ function EnrollmentContent() {
 
 
     // Phase 1: Training Complete
-    const handleCalibrationComplete = async (data: any) => {
+    const handleCalibrationComplete = async (data: unknown) => {
         setIsSaving(true);
         await new Promise(r => setTimeout(r, 800));
 
-        const trainingData = data.rawData;
+        const trainingData = (data as { rawData: any[] }).rawData;
         // Fix: Pass full session objects (with sensors) now that createProfile handles it
         const avgProfile = createProfile(trainingData);
 
@@ -145,9 +145,9 @@ function EnrollmentContent() {
     };
 
     // Phase 2: Verification Complete
-    const handleVerificationComplete = async (data: any) => {
+    const handleVerificationComplete = async (data: unknown) => {
         setIsVerifying(false);
-        const loginSession = data.rawData[0];
+        const loginSession = (data as { rawData: any[] }).rawData[0];
         // Fix: Pass full session object
         const result = compareBiometrics(computedProfile as any, loginSession);
         setVerificationResult(result);

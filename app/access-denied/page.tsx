@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function AccessDeniedPage({ 
@@ -8,7 +8,7 @@ export default async function AccessDeniedPage({
 }: { 
     searchParams: Promise<{ violation?: string }> 
 }) {
-    const { violation } = await searchParams;
+    await searchParams;
 
     return (
         <div className="min-h-screen bg-black text-red-600 flex flex-col items-center justify-center p-4 font-mono uppercase">

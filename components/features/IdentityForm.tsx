@@ -185,9 +185,9 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
                 intentToken // Pass the intent token for the sync step
             });
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Auth Protocol Error:", err);
-            setError(err.message || "Security Handshake Failed.");
+            setError((err as Error).message || "Security Handshake Failed.");
         } finally {
             setLoading(false);
         }

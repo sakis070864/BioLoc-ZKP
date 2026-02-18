@@ -12,9 +12,9 @@ import Link from 'next/link';
 interface Company {
     id: string;
     displayName: string;
-    createdAt: any;
+    createdAt: unknown;
     isActive: boolean;
-    lastPaymentDate: any;
+    lastPaymentDate: unknown;
 }
 
 export default function NexusControl() {
@@ -256,9 +256,9 @@ function DashboardContent() {
         }
     };
 
-    const getDaysSincePayment = (timestamp: any) => {
+    const getDaysSincePayment = (timestamp: unknown) => {
         if (!timestamp) return 0;
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const date = (timestamp as { toDate?: () => Date }).toDate ? (timestamp as { toDate: () => Date }).toDate() : new Date(timestamp as string | number | Date);
         const diff = new Date().getTime() - date.getTime();
         return Math.floor(diff / (1000 * 3600 * 24));
     };
