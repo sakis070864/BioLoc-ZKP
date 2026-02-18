@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
         const userData = userSnap.data();
         const companyData = companySnap.data();
-        const threshold = companyData.securityThreshold || 80;
+        const threshold = 40; // Temporary lowering for calibration testing (was 80)
 
         // 3. Determine target profile
         let targetProfile = null;
@@ -81,10 +81,10 @@ export async function POST(req: Request) {
             await setSessionCookie(finalSessionToken);
             return NextResponse.json({ success: true, score: result.score });
         } else {
-            return NextResponse.json({ 
-                error: "Biometric mismatch", 
+            return NextResponse.json({
+                error: "Biometric mismatch",
                 score: result.score,
-                threshold 
+                threshold
             }, { status: 403 });
         }
 

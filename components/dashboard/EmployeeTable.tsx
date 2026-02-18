@@ -3,12 +3,12 @@
 import React from "react";
 import { createPortal } from "react-dom";
 
+
 import { motion } from "framer-motion";
 import { UAParser } from "ua-parser-js";
 import { User, Smartphone, AlertTriangle, CheckCircle, Clock, Trash2, ShieldCheck, Copy, Monitor } from "lucide-react";
 import { clsx } from "clsx";
-import { doc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+
 
 // Types matching Firestore
 export interface Employee {
@@ -43,7 +43,7 @@ function formatActivity(timestamp: unknown) {
         }
         // Handle ISO String or Number
         else {
-            date = new Date(timestamp as any);
+            date = new Date(timestamp as string | number);
         }
 
         if (isNaN(date.getTime())) return "Invalid Date";
@@ -192,6 +192,7 @@ function DeleteEmployeeButton({ companyId, employeeId, employeeName }: { company
 
         try {
             const { collection, getDocs, deleteDoc, doc } = await import("firebase/firestore");
+            const { db } = await import("@/lib/firebase");
 
             // 1. Recursive Delete: Clean up "history" subcollection
             const historyRef = collection(db, "companies", companyId, "users", employeeId, "history");
@@ -238,8 +239,7 @@ function SimulateButton({ companyId, employeeId }: { companyId: string, employee
         setShowModal(false);
     };
 
-    const [mounted, setMounted] = React.useState(false);
-    React.useEffect(() => setMounted(true), []);
+
 
     return (
         <>

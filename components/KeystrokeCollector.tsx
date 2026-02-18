@@ -10,11 +10,11 @@ export function useKeystrokes() {
   const lastKeyUpTime = useRef<number | null>(null);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = (_e: KeyboardEvent) => {
       // Ignore modifier keys alone, or maintain logic
       // flight time = current press - last release
       const now = performance.now();
-      
+
       if (lastKeyUpTime.current !== null) {
         const flight = now - lastKeyUpTime.current;
         // Basic filtering: flight time < 1000ms (ignore long pauses) and > 0
@@ -24,7 +24,7 @@ export function useKeystrokes() {
       }
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
+    const handleKeyUp = (_e: KeyboardEvent) => {
       lastKeyUpTime.current = performance.now();
     };
 

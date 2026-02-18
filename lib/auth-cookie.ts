@@ -18,7 +18,8 @@ console.log("------------------");
 const ALG = 'HS256';
 
 // eslint-disable-next-line
-export async function createSession(payload: any) {
+// eslint-disable-next-line
+export async function createSession(payload: Record<string, unknown>) {
     return await new SignJWT({ ...payload, biometricVerified: true })
         .setProtectedHeader({ alg: ALG })
         .setIssuedAt()
@@ -27,7 +28,8 @@ export async function createSession(payload: any) {
 }
 
 // eslint-disable-next-line
-export async function createIntentToken(payload: any) {
+// eslint-disable-next-line
+export async function createIntentToken(payload: Record<string, unknown>) {
     return await new SignJWT({ ...payload, biometricVerified: false })
         .setProtectedHeader({ alg: ALG })
         .setIssuedAt()
