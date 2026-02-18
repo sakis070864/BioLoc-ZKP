@@ -27,22 +27,10 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
         if (initialCompanyId) setCompanyId(initialCompanyId);
     }, [initialName, initialId, initialCompanyId]);
 
-    // Load Magic Link data if token exists
+    // Load Magic Link data if token exists - placeholder for now
     useEffect(() => {
-        const _loadMagicLink = async () => {
-            if (!initialToken) return;
-            
-            // In a real app, verify the token via API. 
-            // For now, we assume the token flow is valid but we don't have a backend endpoint 
-            // to fetch the details *from the token* in this demo without more complex setup.
-            // But we can check if there's a corresponding magic link doc in Firestore?
-            // Actually, for this demo, we can just rely on user input OR fetch if we had the logic.
-            
-            // Let's implement a quick client-side lookup if we want to be fancy, 
-            // or just leave it manual. The requirement was "Sensitive Information in URLs".
-            // We fixed the URL. Now the user must manually enter ID/Name OR 
-            // we need an endpoint to "resolve" the magic link token.
-        }
+        if (!initialToken) return;
+        // In a real app, verify the token via API. 
     }, [initialToken]);
 
     // Step 1: Identify, Step 2: Authenticate
@@ -50,8 +38,6 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
 
     // Auth State
     const [password, setPassword] = useState("");
-    const [_storedHash, _setStoredHash] = useState<string | null>(null);
-    const [_storedSalt, _setStoredSalt] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
 
@@ -86,7 +72,7 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
             id,
             companyId,
             password: newPassword,
-            // @ts-expect-error
+            // @ts-expect-error: intentToken is not in the type definition but required by backend logic
             intentToken: initialToken // Use the one from magic link if available
         });
         setLoading(false);
@@ -177,7 +163,7 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
                 id,
                 companyId,
                 password,
-                // @ts-expect-error
+                // @ts-expect-error: intentToken is not in the type definition but required by backend logic
                 intentToken // Pass the intent token for the sync step
             });
 

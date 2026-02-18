@@ -179,10 +179,8 @@ export default function BiometricCapture({ onComplete, mode = "train", trainingR
                     type="password"
                     value={inputValue}
                     onChange={handleChange}
-                    // Ignored any
-                    onKeyDown={handleKeyDown as any}
-                    // Ignored any
-                    onKeyUp={handleKeyUp as any}
+                    onKeyDown={handleKeyDown}
+                    onKeyUp={handleKeyUp}
                     className={clsx(
                         "w-full bg-slate-900/50 border-2 rounded-xl px-6 py-4 text-center text-xl text-white font-mono tracking-widest focus:outline-none transition-all duration-300",
                         feedback === "neutral" && "border-slate-700 focus:border-cyan-500",

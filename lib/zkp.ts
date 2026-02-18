@@ -62,7 +62,7 @@ export class ZKPEngine {
 
     // Generate a simple ZK Proof (Simplified Schnorr-like for demo)
     // Proves knowledge of 'value' and 'randomness'
-    async generateProof(secretStr: string, nonce: string): Promise<{ commitment: string, proof: unknown }> {
+    async generateProof(secretStr: string, nonce: string): Promise<{ commitment: string, proof: { T: string; z_v: string; z_r: string } }> {
         const value = await this.hashToField(secretStr);
         const r = this.randomFieldElement(); // Secret Randomness
 
