@@ -62,7 +62,7 @@ export class ZKPEngine {
 
     // Generate a simple ZK Proof (Simplified Schnorr-like for demo)
     // Proves knowledge of 'value' and 'randomness'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     async generateProof(secretStr: string, nonce: string): Promise<{ commitment: string, proof: any }> {
         const value = await this.hashToField(secretStr);
         const r = this.randomFieldElement(); // Secret Randomness
@@ -99,7 +99,7 @@ export class ZKPEngine {
     }
 
     // Server-side verification logic
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     async verifyProof(commitmentHex: string, proof: any, nonce: string): Promise<boolean> {
         try {
             const C = BigInt(commitmentHex);

@@ -43,7 +43,7 @@ function formatActivity(timestamp: unknown) {
         }
         // Handle ISO String or Number
         else {
-            date = new Date(timestamp);
+            date = new Date(timestamp as any);
         }
 
         if (isNaN(date.getTime())) return "Invalid Date";

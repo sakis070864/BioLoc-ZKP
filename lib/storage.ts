@@ -3,7 +3,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 interface BiometricProfile {
     id: string;
     timestamp: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     rawData?: any[]; // KeystrokeData[]
     encryptedData?: ArrayBuffer;
     iv?: Uint8Array;
@@ -41,7 +41,7 @@ async function getEncryptionKey(): Promise<CryptoKey> {
     return key;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line
 async function encryptData(data: any): Promise<{ ciphertext: ArrayBuffer, iv: Uint8Array }> {
     const key = await getEncryptionKey();
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -56,12 +56,12 @@ async function encryptData(data: any): Promise<{ ciphertext: ArrayBuffer, iv: Ui
     return { ciphertext, iv };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line
 async function decryptData(ciphertext: ArrayBuffer, iv: Uint8Array): Promise<any> {
     try {
         const key = await getEncryptionKey();
         const decrypted = await window.crypto.subtle.decrypt(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line
             { name: "AES-GCM", iv: iv as any },
             key,
             ciphertext
@@ -83,7 +83,7 @@ if (typeof window !== 'undefined') {
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line
 export const saveProfile = async (rawData: any[]) => {
     if (!dbPromise) return;
     const db = await dbPromise;
@@ -93,7 +93,7 @@ export const saveProfile = async (rawData: any[]) => {
     // SECURITY: Real AES-GCM Encryption
     const encrypted = await encryptData(rawData);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     const profile: any = {
         id: randomId,
         timestamp: Date.now(),

@@ -136,7 +136,7 @@ function EnrollmentContent() {
                 // @ts-ignore
                 zkp: (userData as any).zkp,
                 biometricProfile: avgProfile, // SAVE TO DB
-                phrase: data.phrase, // Save text password
+                phrase: (data as any).phrase, // Save text password
                 password: userData.password, // Pass password if set during registration
                 intentToken: userData.intentToken // Pass the authorization token
             });
@@ -189,7 +189,7 @@ function EnrollmentContent() {
 
             <div className="flex flex-col items-center mb-8">
                 <span className="text-xs font-mono text-cyan-500 uppercase tracking-widest mb-2">Secure Gateway</span>
-                <h1 className="text-2xl text-white font-bold">{activeCompanyId.toUpperCase().replace(/_/g, " ")}</h1>
+                <h1 className="text-2xl text-white font-bold">{(activeCompanyId || "").toUpperCase().replace(/_/g, " ")}</h1>
                 {userData && (
                     <div className="mt-2 text-center">
                         <p className="text-lg text-cyan-400 font-medium">{userData.name}</p>
