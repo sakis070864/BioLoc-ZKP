@@ -180,7 +180,7 @@ export default function NexusControl() {
 function DashboardContent() {
     const [companies, setCompanies] = useState<Company[]>([]);
     const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-    const [companyUsers, setCompanyUsers] = useState<any[]>([]);
+    const [companyUsers, setCompanyUsers] = useState<unknown[]>([]);
     const [newCompanyId, setNewCompanyId] = useState('');
     const [newCompanyName, setNewCompanyName] = useState('');
     const [loading, setLoading] = useState(false);

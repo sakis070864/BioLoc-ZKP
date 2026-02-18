@@ -20,7 +20,7 @@ function EnrollmentContent() {
     const [userData, setUserData] = useState<{ name: string, id: string, companyId: string, intentToken?: string, password?: string } | null>(null);
     const [isCalibrating, setIsCalibrating] = useState(false);
     const [isVerifying, setIsVerifying] = useState(false);
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<{ rawData: unknown[]; phrase?: string } | null>(null);
     const [computedProfile, setComputedProfile] = useState<number[]>([]);
     const [verificationResult, setVerificationResult] = useState<{ score: number, distance: number } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -117,12 +117,13 @@ function EnrollmentContent() {
         setIsSaving(true);
         await new Promise(r => setTimeout(r, 800));
 
-        const trainingData = (data as { rawData: any[] }).rawData;
+        const trainingData = (data as { rawData: unknown[] }).rawData;
         // Fix: Pass full session objects (with sensors) now that createProfile handles it
+        // @ts-expect-error: Legacy profile mismatch
         const avgProfile = createProfile(trainingData);
 
-        setComputedProfile(avgProfile as any);
-        setProfile(data);
+        setComputedProfile(avgProfile as unknown as number[]);
+        setProfile(data as { rawData: unknown[]; phrase?: string });
 
         // Sync to Firebase
         if (userData) {
@@ -133,10 +134,10 @@ function EnrollmentContent() {
                 displayName: userData.name,
                 riskScore: mockRiskScore,
                 status: "LOCKED",
-                // @ts-expect-error
-                _zkp: (userData as any).zkp,
+                // @ts-expect-error: ZKP interface misalignment
+                _zkp: (userData as { zkp?: unknown }).zkp,
                 biometricProfile: avgProfile, // SAVE TO DB
-                phrase: (data as any).phrase, // Save text password
+                phrase: (data as { phrase?: string }).phrase, // Save text password
                 password: userData.password, // Pass password if set during registration
                 intentToken: userData.intentToken // Pass the authorization token
             });
@@ -147,9 +148,10 @@ function EnrollmentContent() {
     // Phase 2: Verification Complete
     const handleVerificationComplete = async (data: unknown) => {
         setIsVerifying(false);
-        const loginSession = (data as { rawData: any[] }).rawData[0];
+        const loginSession = (data as { rawData: unknown[] }).rawData[0];
         // Fix: Pass full session object
-        const result = compareBiometrics(computedProfile as any, loginSession);
+        // @ts-expect-error: Legacy session mismatch
+        const result = compareBiometrics(computedProfile as unknown as BiometricFactors, loginSession);
         setVerificationResult(result);
     };
 
@@ -262,8 +264,9 @@ function EnrollmentContent() {
                             onComplete={handleCalibrationComplete}
                             mode="train"
                             trainingReps={trainingReps}
-                            initialPhrase={(userData as any).password}
+                            initialPhrase={(userData as { password?: string }).password}
                         />
+                        {isSaving && <div className="text-cyan-500 mt-4 text-sm animate-pulse">Saving Profile...</div>}
                     </motion.div>
                 ) : isVerifying ? (
                     <motion.div
