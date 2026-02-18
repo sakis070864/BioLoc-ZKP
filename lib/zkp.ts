@@ -33,11 +33,11 @@ export class ZKPEngine {
         const encoder = new TextEncoder();
         const data = encoder.encode(input);
         const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        
+
         // Convert ArrayBuffer to Hex String then to BigInt
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        
+
         // Take mod p
         return BigInt("0x" + hashHex) % this.p;
     }
@@ -62,6 +62,7 @@ export class ZKPEngine {
 
     // Generate a simple ZK Proof (Simplified Schnorr-like for demo)
     // Proves knowledge of 'value' and 'randomness'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async generateProof(secretStr: string, nonce: string): Promise<{ commitment: string, proof: any }> {
         const value = await this.hashToField(secretStr);
         const r = this.randomFieldElement(); // Secret Randomness
@@ -98,6 +99,7 @@ export class ZKPEngine {
     }
 
     // Server-side verification logic
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async verifyProof(commitmentHex: string, proof: any, nonce: string): Promise<boolean> {
         try {
             const C = BigInt(commitmentHex);
@@ -116,7 +118,7 @@ export class ZKPEngine {
             const right = (right_T * right_C_c) % this.p;
 
             return left === right;
-        } catch (e) {
+        } catch {
             return false;
         }
     }

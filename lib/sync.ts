@@ -1,5 +1,4 @@
-import { db } from "./firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+
 
 interface SyncProofParams {
     userId: string;
@@ -9,8 +8,10 @@ interface SyncProofParams {
     status: "LOCKED" | "PENDING" | "REJECTED";
     zkProof?: {
         commitment: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         proof: any;
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     biometricProfile?: any;
     password?: string;
     phrase?: string;
