@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         // Check if user exists to handle password initialization for new users
         const userSnap = await getDoc(userRef);
 
-        const payload: any = {
+        const payload: Record<string, unknown> = {
             id: userId,
             companyId,
             displayName,

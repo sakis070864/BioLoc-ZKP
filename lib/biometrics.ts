@@ -297,8 +297,7 @@ export function analyzeBiometric30(
 export interface SessionData {
     keys: KeyEvent[];
     sensors?: DeviceSensorData[];
-    // eslint-disable-next-line
-    mouse?: any[];
+    mouse?: unknown[];
     startTime?: number; // Added for correct Startup Latency
     timestamp?: number;
 }

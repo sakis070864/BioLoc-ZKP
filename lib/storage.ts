@@ -3,8 +3,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 interface BiometricProfile {
     id: string;
     timestamp: number;
-    // eslint-disable-next-line
-    rawData?: any[]; // KeystrokeData[]
+    rawData?: unknown[]; // KeystrokeData[]
     encryptedData?: ArrayBuffer;
     iv?: Uint8Array;
     version: string;
@@ -41,8 +40,7 @@ async function getEncryptionKey(): Promise<CryptoKey> {
     return key;
 }
 
-// eslint-disable-next-line
-async function encryptData(data: any): Promise<{ ciphertext: ArrayBuffer, iv: Uint8Array }> {
+async function encryptData(data: unknown): Promise<{ ciphertext: ArrayBuffer, iv: Uint8Array }> {
     const key = await getEncryptionKey();
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const encoded = new TextEncoder().encode(JSON.stringify(data));
@@ -56,13 +54,11 @@ async function encryptData(data: any): Promise<{ ciphertext: ArrayBuffer, iv: Ui
     return { ciphertext, iv };
 }
 
-// eslint-disable-next-line
-async function decryptData(ciphertext: ArrayBuffer, iv: Uint8Array): Promise<any> {
+async function decryptData(ciphertext: ArrayBuffer, iv: Uint8Array): Promise<unknown> {
     try {
         const key = await getEncryptionKey();
         const decrypted = await window.crypto.subtle.decrypt(
-            // eslint-disable-next-line
-            { name: "AES-GCM", iv: iv as any },
+            { name: "AES-GCM", iv },
             key,
             ciphertext
         );
@@ -83,8 +79,7 @@ if (typeof window !== 'undefined') {
     });
 }
 
-// eslint-disable-next-line
-export const saveProfile = async (rawData: any[]) => {
+export const saveProfile = async (rawData: unknown[]) => {
     if (!dbPromise) return;
     const db = await dbPromise;
 
@@ -93,8 +88,7 @@ export const saveProfile = async (rawData: any[]) => {
     // SECURITY: Real AES-GCM Encryption
     const encrypted = await encryptData(rawData);
 
-    // eslint-disable-next-line
-    const profile: any = {
+    const profile: BiometricProfile = {
         id: randomId,
         timestamp: Date.now(),
         encryptedData: encrypted.ciphertext,

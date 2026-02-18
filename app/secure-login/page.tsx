@@ -45,7 +45,7 @@ const SecureLoginPage = () => {
 
     // Biometric Shield State
     const [state, setState] = useState<GuardState>('IDLE'); // Start Idle for Biometrics (once auth)
-    const [profileData, setProfileData] = useState<any>(null);
+    const [profileData, setProfileData] = useState<unknown>(null);
     const [phrase, setPhrase] = useState(""); // The simplified phrase (likely same as password)
     const [retries, setRetries] = useState(0);
     const [countdown, setCountdown] = useState(5);
@@ -204,10 +204,10 @@ const SecureLoginPage = () => {
 
     // Biometric Handlers
     const handleStartSession = async () => {
-        // Ignored any
-        if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
-            // Ignored any
-            try { await (DeviceMotionEvent as any).requestPermission(); } catch { }
+        // Handle DeviceMotionEvent permission for iOS
+        const motion = DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> };
+        if (typeof motion.requestPermission === 'function') {
+            try { await motion.requestPermission(); } catch { }
         }
         setIsSessionActive(true);
         setTimeout(() => inputRef.current?.focus(), 100);

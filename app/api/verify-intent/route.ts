@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
         // DETERMINE NEXT STEP BASED ON HISTORY LENGTH
         // Count only USER messages to determine the phase
-        const userTurns = history.filter((msg: any) => msg.role === 'user').length;
+        const userTurns = (history as { role: string }[]).filter((msg) => msg.role === 'user').length;
         let prompt = "";
 
         // System Prompt to enforce persona
@@ -94,11 +94,11 @@ export async function POST(req: Request) {
             status: status
         });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('AI Error:', error);
         return NextResponse.json({
-            error: error.message || 'AI Protocol Failed',
-            details: error.toString()
+            error: (error as Error).message || 'AI Protocol Failed',
+            details: String(error)
         }, { status: 500 });
     }
 }
