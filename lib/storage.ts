@@ -46,7 +46,7 @@ async function encryptData(data: unknown): Promise<{ ciphertext: ArrayBuffer, iv
     const encoded = new TextEncoder().encode(JSON.stringify(data));
 
     const ciphertext = await window.crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: iv as Uint8Array },
+        { name: "AES-GCM", iv: iv as unknown as Uint8Array },
         key,
         encoded
     );
@@ -58,7 +58,7 @@ async function decryptData(ciphertext: ArrayBuffer, iv: Uint8Array): Promise<unk
     try {
         const key = await getEncryptionKey();
         const decrypted = await window.crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: iv as Uint8Array },
+            { name: "AES-GCM", iv: iv as unknown as Uint8Array },
             key,
             ciphertext
         );
