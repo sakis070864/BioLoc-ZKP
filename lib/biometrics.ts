@@ -297,6 +297,7 @@ export function analyzeBiometric30(
 export interface SessionData {
     keys: KeyEvent[];
     sensors?: DeviceSensorData[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mouse?: any[];
     startTime?: number; // Added for correct Startup Latency
     timestamp?: number;
@@ -465,7 +466,7 @@ export function analyzeBiometric12(events: KeyEvent[], startTime?: number): Biom
 
     // --- PRE-PROCESSING ---
     const downEvents = events.filter(e => e.type === "keydown");
-    const upEvents = events.filter(e => e.type === "keyup");
+    // const upEvents = events.filter(e => e.type === "keyup"); // UNUSED
 
     // O(N) Pre-processing for KeyUps
     const keyUpMap = new Map<string, number[]>();

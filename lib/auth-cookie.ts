@@ -17,6 +17,7 @@ console.log("------------------");
 
 const ALG = 'HS256';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createSession(payload: any) {
     return await new SignJWT({ ...payload, biometricVerified: true })
         .setProtectedHeader({ alg: ALG })
@@ -25,6 +26,7 @@ export async function createSession(payload: any) {
         .sign(SECRET_KEY);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createIntentToken(payload: any) {
     return await new SignJWT({ ...payload, biometricVerified: false })
         .setProtectedHeader({ alg: ALG })

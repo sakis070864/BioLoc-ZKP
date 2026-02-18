@@ -3,6 +3,7 @@ import { openDB, DBSchema, IDBPDatabase } from 'idb';
 interface BiometricProfile {
     id: string;
     timestamp: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rawData?: any[]; // KeystrokeData[]
     encryptedData?: ArrayBuffer;
     iv?: Uint8Array;
@@ -40,6 +41,7 @@ async function getEncryptionKey(): Promise<CryptoKey> {
     return key;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function encryptData(data: any): Promise<{ ciphertext: ArrayBuffer, iv: Uint8Array }> {
     const key = await getEncryptionKey();
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -54,10 +56,12 @@ async function encryptData(data: any): Promise<{ ciphertext: ArrayBuffer, iv: Ui
     return { ciphertext, iv };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function decryptData(ciphertext: ArrayBuffer, iv: Uint8Array): Promise<any> {
     try {
         const key = await getEncryptionKey();
         const decrypted = await window.crypto.subtle.decrypt(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { name: "AES-GCM", iv: iv as any },
             key,
             ciphertext
@@ -79,15 +83,17 @@ if (typeof window !== 'undefined') {
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const saveProfile = async (rawData: any[]) => {
     if (!dbPromise) return;
     const db = await dbPromise;
 
     const randomId = crypto.randomUUID();
-    
+
     // SECURITY: Real AES-GCM Encryption
     const encrypted = await encryptData(rawData);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const profile: any = {
         id: randomId,
         timestamp: Date.now(),
@@ -108,10 +114,10 @@ export const getLatestProfile = async () => {
     const all = await store.getAll();
 
     if (all.length === 0) return null;
-    
+
     // Sort by timestamp
     const latest = all.sort((a, b) => b.timestamp - a.timestamp)[0];
-    
+
     // Decrypt if it's the new format
     if (latest.encryptedData && latest.iv) {
         const decryptedRaw = await decryptData(latest.encryptedData, latest.iv);
