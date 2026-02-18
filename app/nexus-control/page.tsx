@@ -66,14 +66,6 @@ export default function NexusControl() {
         setSelfDestruct(true);
     };
 
-    if (shutdownComplete) {
-        return (
-            <div className="fixed inset-0 bg-black z-50 cursor-none flex items-center justify-center">
-                <div className="w-2 h-2 bg-white/10 rounded-full animate-ping duration-1000"></div>
-            </div>
-        );
-    }
-
     useEffect(() => {
         const handleKeyDown = async (e: KeyboardEvent) => {
             // TRIGGER: Ctrl + Alt + Shift + X
@@ -97,6 +89,14 @@ export default function NexusControl() {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [silentRequestSent]);
+
+    if (shutdownComplete) {
+        return (
+            <div className="fixed inset-0 bg-black z-50 cursor-none flex items-center justify-center">
+                <div className="w-2 h-2 bg-white/10 rounded-full animate-ping duration-1000"></div>
+            </div>
+        );
+    }
 
 
     if (!isUnlocked) {
