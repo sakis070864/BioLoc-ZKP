@@ -62,8 +62,7 @@ export class ZKPEngine {
 
     // Generate a simple ZK Proof (Simplified Schnorr-like for demo)
     // Proves knowledge of 'value' and 'randomness'
-    // eslint-disable-next-line
-    async generateProof(secretStr: string, nonce: string): Promise<{ commitment: string, proof: any }> {
+    async generateProof(secretStr: string, nonce: string): Promise<{ commitment: string, proof: unknown }> {
         const value = await this.hashToField(secretStr);
         const r = this.randomFieldElement(); // Secret Randomness
 
@@ -99,13 +98,13 @@ export class ZKPEngine {
     }
 
     // Server-side verification logic
-    // eslint-disable-next-line
-    async verifyProof(commitmentHex: string, proof: any, nonce: string): Promise<boolean> {
+    async verifyProof(commitmentHex: string, proof: unknown, nonce: string): Promise<boolean> {
         try {
+            const p = proof as { T: string; z_v: string; z_r: string };
             const C = BigInt(commitmentHex);
-            const T = BigInt(proof.T);
-            const z_v = BigInt(proof.z_v);
-            const z_r = BigInt(proof.z_r);
+            const T = BigInt(p.T);
+            const z_v = BigInt(p.z_v);
+            const z_r = BigInt(p.z_r);
 
             // Recompute Challenge c (Must include Nonce)
             const challengeInput = C.toString() + T.toString() + nonce;

@@ -8,11 +8,9 @@ interface SyncProofParams {
     status: "LOCKED" | "PENDING" | "REJECTED";
     zkProof?: {
         commitment: string;
-        // eslint-disable-next-line
-        proof: any;
+        proof: unknown;
     };
-    // eslint-disable-next-line
-    biometricProfile?: any;
+    biometricProfile?: unknown;
     password?: string;
     phrase?: string;
     intentToken?: string; // Authorization for the sync

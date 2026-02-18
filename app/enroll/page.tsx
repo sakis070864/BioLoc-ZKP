@@ -133,8 +133,8 @@ function EnrollmentContent() {
                 displayName: userData.name,
                 riskScore: mockRiskScore,
                 status: "LOCKED",
-                // @ts-ignore
-                zkp: (userData as any).zkp,
+                // @ts-expect-error
+                _zkp: (userData as any).zkp,
                 biometricProfile: avgProfile, // SAVE TO DB
                 phrase: (data as any).phrase, // Save text password
                 password: userData.password, // Pass password if set during registration

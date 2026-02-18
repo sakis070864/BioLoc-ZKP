@@ -2,13 +2,9 @@
 import { clsx } from "clsx";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { User, Fingerprint, ChevronRight, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { zkp } from "@/lib/zkp";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
-import { sha256, generateSalt } from "@/lib/hash";
 
 
 interface IdentityFormProps {
@@ -33,7 +29,7 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
 
     // Load Magic Link data if token exists
     useEffect(() => {
-        const loadMagicLink = async () => {
+        const _loadMagicLink = async () => {
             if (!initialToken) return;
             
             // In a real app, verify the token via API. 
@@ -54,8 +50,8 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
 
     // Auth State
     const [password, setPassword] = useState("");
-    const [storedHash, setStoredHash] = useState<string | null>(null);
-    const [storedSalt, setStoredSalt] = useState<string | null>(null);
+    const [_storedHash, _setStoredHash] = useState<string | null>(null);
+    const [_storedSalt, _setStoredSalt] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
 
 
@@ -90,7 +86,7 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
             id,
             companyId,
             password: newPassword,
-            // @ts-ignore
+            // @ts-expect-error
             intentToken: initialToken // Use the one from magic link if available
         });
         setLoading(false);
@@ -181,7 +177,7 @@ export default function IdentityForm({ onComplete, initialCompanyId, initialToke
                 id,
                 companyId,
                 password,
-                // @ts-ignore
+                // @ts-expect-error
                 intentToken // Pass the intent token for the sync step
             });
 
