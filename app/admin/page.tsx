@@ -240,7 +240,7 @@ export default function AdminDashboard() {
     // Helper to calculate days since payment
     const getDaysSincePayment = (timestamp: Timestamp | null | undefined) => {
         if (!timestamp) return 0;
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp as any);
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp as unknown as string | number | Date);
         const diff = new Date().getTime() - date.getTime();
         return Math.floor(diff / (1000 * 3600 * 24));
     };

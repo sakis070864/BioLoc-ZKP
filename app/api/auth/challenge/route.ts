@@ -3,7 +3,7 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { randomUUID } from 'crypto';
 
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
     try {
         // 1. Generate Cryptographically Secure Nonce
         const nonce = randomUUID();
