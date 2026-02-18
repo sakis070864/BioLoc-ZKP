@@ -46,6 +46,7 @@ async function encryptData(data: unknown): Promise<{ ciphertext: ArrayBuffer, iv
     const encoded = new TextEncoder().encode(JSON.stringify(data));
 
     const ciphertext = await window.crypto.subtle.encrypt(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { name: "AES-GCM", iv: iv as any },
         key,
         encoded
@@ -58,6 +59,7 @@ async function decryptData(ciphertext: ArrayBuffer, iv: Uint8Array): Promise<unk
     try {
         const key = await getEncryptionKey();
         const decrypted = await window.crypto.subtle.decrypt(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { name: "AES-GCM", iv: iv as any },
             key,
             ciphertext
