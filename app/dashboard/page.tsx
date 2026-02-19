@@ -99,9 +99,10 @@ function DashboardContent() {
                     const data = await res.json();
                     if (res.ok && data.token) {
                         console.log("Setup Login Complete with Token");
-                        setTempAuthToken(data.token); // Store for API calls
+                        setTempAuthToken(data.token);
+                        sessionStorage.setItem("zkp_auth_token", data.token); // PERSIST TOKEN
 
-                        // Clean URL but DO NOT reload (keeps us in the "authorized" flow)
+                        // Clean URL but DO NOT reload
                         const newUrl = window.location.pathname;
                         window.history.replaceState({}, '', newUrl);
                     } else {
@@ -117,6 +118,11 @@ function DashboardContent() {
 
             // 2. Normal Flow
             const storedId = sessionStorage.getItem("zkp_company_id");
+            const storedToken = sessionStorage.getItem("zkp_auth_token");
+
+            if (storedToken) {
+                setTempAuthToken(storedToken);
+            }
 
             if (storedId) {
                 setCompanyId(storedId);
