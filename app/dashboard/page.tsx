@@ -178,6 +178,8 @@ function DashboardContent() {
             setMagicLink("Generating...");
             const res = await fetch('/api/magic-link', {
                 method: 'POST',
+                credentials: 'include', // Ensure cookies are sent
+
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     companyId,
