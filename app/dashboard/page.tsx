@@ -84,6 +84,16 @@ function DashboardContent() {
                 sessionStorage.setItem("zkp_company_id", setupId);
                 setCompanyId(setupId);
 
+                // --- FIX: Auto-Login for Setup Link ---
+                // We must establish a server-side session cookie so future API calls (like generateLink) work.
+                fetch('/api/auth/setup-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyId: setupId })
+                }).then(() => {
+                    console.log("Setup Login Complete");
+                }).catch(err => console.error("Setup Login Failed", err));
+
                 // Clean URL (remove the sensitive/ugly param)
                 const newUrl = window.location.pathname;
                 window.history.replaceState({}, '', newUrl);
@@ -189,7 +199,16 @@ function DashboardContent() {
                 })
             });
 
-            if (!res.ok) throw new Error("Failed to generate link");
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error("Link Gen Error:", res.status, errData);
+                if (res.status === 401) {
+                    alert("Session expired. Please log in again.");
+                    window.location.href = "/secure-login";
+                    return '';
+                }
+                throw new Error(errData.details || errData.error || "Failed to generate link");
+            }
 
             const data = await res.json();
             // Force client-side construction to ensure correct port (bypassing any server-side misdetection)

@@ -39,8 +39,13 @@ export async function POST(req: Request) {
         }
 
         if (!session) {
-            console.error("Magic Link 401: No session found. Cookie present?", (await import('next/headers').then(mod => mod.cookies())).has('auth_session'));
-            return NextResponse.json({ error: "Unauthorized: Admin session required" }, { status: 401 });
+            const cookieStore = await import('next/headers').then(mod => mod.cookies());
+            const hasCookie = cookieStore.has('auth_session');
+            console.error(`Magic Link 401: Session Invalid. Cookie present: ${hasCookie}`);
+            return NextResponse.json({
+                error: "Unauthorized",
+                details: hasCookie ? "Session Verification Failed" : "No Session Cookie Found"
+            }, { status: 401 });
         }
 
         const { companyId, name, id, origin } = await req.json();
