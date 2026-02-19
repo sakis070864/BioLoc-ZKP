@@ -55,7 +55,7 @@ function formatActivity(timestamp: unknown) {
             minute: 'numeric',
             hour12: true
         });
-    } catch (e) {
+    } catch {
         return "Error";
     }
 }

@@ -43,7 +43,7 @@ export default function AiGatekeeper({ onVerified, onClose }: AiGatekeeperProps)
                     throw new Error(data.error);
                 }
                 setMessages([{ role: "model", content: data.reply }]);
-            } catch (_err) {
+            } catch {
                 setMessages([{ role: "model", content: `ERROR: NEURAL LINK SEVERED.` }]);
             } finally {
                 setIsLoading(false);
@@ -77,7 +77,7 @@ export default function AiGatekeeper({ onVerified, onClose }: AiGatekeeperProps)
                 setStatus("REJECTED");
             }
 
-        } catch (_err) {
+        } catch {
             setMessages((prev) => [...prev, { role: "model", content: "ERROR: PACKET LOSS. RETRY." }]);
         } finally {
             setIsLoading(false);

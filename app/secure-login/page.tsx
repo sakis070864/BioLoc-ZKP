@@ -10,9 +10,8 @@ import { Lock, ShieldCheck, ShieldAlert, Activity, Eye, Play, ChevronRight, EyeO
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from "clsx";
 
-// IMPORTING FROZEN BIOMETRIC ENGINE (READ-ONLY)
+// Frozen BIOMETRIC ENGINE (READ-ONLY)
 import { compareBiometrics, BiometricFactors, SessionData } from '@/lib/biometrics';
-import { generateSalt, sha256 } from '@/lib/hash';
 
 
 // Local definition because KeyEvent is not exported from the frozen file
@@ -120,7 +119,7 @@ const SecureLoginPage = () => {
 
             // STAGE 1 SUCCESS: Store Intent Token
             setIntentToken(data.intentToken);
-            
+
             if (typeof window !== "undefined") {
                 sessionStorage.setItem("zkp_company_id", companyId);
             }

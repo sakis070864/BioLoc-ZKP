@@ -10,7 +10,7 @@ export function useKeystrokes() {
   const lastKeyUpTime = useRef<number | null>(null);
 
   useEffect(() => {
-    const handleKeyDown = (_e: KeyboardEvent) => {
+    const handleKeyDown = () => {
       // Ignore modifier keys alone, or maintain logic
       // flight time = current press - last release
       const now = performance.now();
@@ -24,7 +24,7 @@ export function useKeystrokes() {
       }
     };
 
-    const handleKeyUp = (_e: KeyboardEvent) => {
+    const handleKeyUp = () => {
       lastKeyUpTime.current = performance.now();
     };
 
