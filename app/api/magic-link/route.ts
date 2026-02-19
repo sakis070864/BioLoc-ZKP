@@ -11,7 +11,23 @@ export async function POST(req: Request) {
         // 1. Try User Session
         let session = await getSession();
 
-        // 2. Fallback: Try Admin Session (if coming from Nexus Control)
+        // 2. Fallback: Try Bearer Token (Setup Flow)
+        if (!session) {
+            const authHeader = req.headers.get('Authorization');
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.split(' ')[1];
+                try {
+                    const payload = await import('@/lib/auth-cookie').then(m => m.verifySession(token));
+                    if (payload) {
+                        session = payload;
+                    }
+                } catch (e) {
+                    console.error("Bearer Token Invalid:", e);
+                }
+            }
+        }
+
+        // 3. Fallback: Try Admin Session (if coming from Nexus Control)
         if (!session) {
             const cookieStore = await import('next/headers').then(mod => mod.cookies());
             const adminToken = cookieStore.get('admin_session')?.value;

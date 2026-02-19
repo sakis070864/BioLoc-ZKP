@@ -75,6 +75,7 @@ function DashboardContent() {
 
     // Loading State for Setup
     const [isSettingUp, setIsSettingUp] = useState(false);
+    const [tempAuthToken, setTempAuthToken] = useState<string | null>(null);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -83,34 +84,32 @@ function DashboardContent() {
             const setupId = params.get("setup_company_id");
 
             if (setupId) {
-                // Block UI
-                setIsSettingUp(true);
-
                 // Set Context
                 sessionStorage.setItem("zkp_company_id", setupId);
                 setCompanyId(setupId);
+                setIsSettingUp(true);
 
-                // --- FIX: Auto-Login for Setup Link ---
-                // We must establish a server-side session cookie so future API calls (like generateLink) work.
+                // --- FIX: Auto-Login with Token Return ---
+                // We fetch the token and store it in memory for immediate use, bypassing cookie delays.
                 fetch('/api/auth/setup-login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ companyId: setupId })
                 }).then(async (res) => {
-                    if (res.ok) {
-                        console.log("Setup Login Complete");
-                        // Wait a moment for cookie propagation
-                        await new Promise(r => setTimeout(r, 1000));
-                        // Clean URL and RELOAD to ensure middleware/cookie is active
+                    const data = await res.json();
+                    if (res.ok && data.token) {
+                        console.log("Setup Login Complete with Token");
+                        setTempAuthToken(data.token); // Store for API calls
+
+                        // Clean URL but DO NOT reload (keeps us in the "authorized" flow)
                         const newUrl = window.location.pathname;
                         window.history.replaceState({}, '', newUrl);
-                        window.location.reload();
                     } else {
                         console.error("Setup Login Failed");
-                        setIsSettingUp(false);
                     }
                 }).catch(err => {
                     console.error("Setup Login Error", err);
+                }).finally(() => {
                     setIsSettingUp(false);
                 });
                 return;
@@ -215,11 +214,16 @@ function DashboardContent() {
 
         try {
             setMagicLink("Generating...");
+
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (tempAuthToken) {
+                headers['Authorization'] = `Bearer ${tempAuthToken}`;
+            }
+
             const res = await fetch('/api/magic-link', {
                 method: 'POST',
                 credentials: 'include', // Ensure cookies are sent
-
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     companyId,
                     name: empName,

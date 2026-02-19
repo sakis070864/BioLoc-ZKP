@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         // 3. Set Cookie
         await setSessionCookie(token);
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, token });
 
     } catch (error) {
         console.error("Setup Login Error:", error);
