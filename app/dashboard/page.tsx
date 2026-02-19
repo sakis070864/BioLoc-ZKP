@@ -73,6 +73,9 @@ function DashboardContent() {
     // For this fix, we will at least ensure we don't blindly trust the URL parameter
     // if a session is already established for a DIFFERENT company.
 
+    // Loading State for Setup
+    const [isSettingUp, setIsSettingUp] = useState(false);
+
     useEffect(() => {
         if (typeof window !== "undefined") {
             // 1. Check for Magic Link Setup
@@ -80,6 +83,9 @@ function DashboardContent() {
             const setupId = params.get("setup_company_id");
 
             if (setupId) {
+                // Block UI
+                setIsSettingUp(true);
+
                 // Set Context
                 sessionStorage.setItem("zkp_company_id", setupId);
                 setCompanyId(setupId);
@@ -90,13 +96,23 @@ function DashboardContent() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ companyId: setupId })
-                }).then(() => {
-                    console.log("Setup Login Complete");
-                }).catch(err => console.error("Setup Login Failed", err));
-
-                // Clean URL (remove the sensitive/ugly param)
-                const newUrl = window.location.pathname;
-                window.history.replaceState({}, '', newUrl);
+                }).then(async (res) => {
+                    if (res.ok) {
+                        console.log("Setup Login Complete");
+                        // Wait a moment for cookie propagation
+                        await new Promise(r => setTimeout(r, 1000));
+                        // Clean URL and RELOAD to ensure middleware/cookie is active
+                        const newUrl = window.location.pathname;
+                        window.history.replaceState({}, '', newUrl);
+                        window.location.reload();
+                    } else {
+                        console.error("Setup Login Failed");
+                        setIsSettingUp(false);
+                    }
+                }).catch(err => {
+                    console.error("Setup Login Error", err);
+                    setIsSettingUp(false);
+                });
                 return;
             }
 
@@ -111,6 +127,19 @@ function DashboardContent() {
             }
         }
     }, []);
+
+    if (isSettingUp) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white">
+                <div className="text-center space-y-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto"></div>
+                    <p className="text-sm tracking-widest text-slate-400 uppercase">
+                        Initializing Secure Environment...
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     const [trainingReps, setTrainingReps] = useState(10);
 
