@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifySession, setSessionCookie } from '@/lib/auth-cookie';
+import { verifySession } from '@/lib/auth-cookie';
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
@@ -15,17 +15,22 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: "Invalid or Expired Token" }, { status: 401 });
     }
 
-    // Token is valid. Set it as the session cookie.
-    // We can reuse the token or create a new one. Reusing is simpler.
-    // Note: The token has 'isTemporary: true' claim if we added it. 
-    // If we want a "proper" session, we might want to issue a new clean one?
-    // Let's just use it. The Middleware only checks `verifySession` validity.
-
-    await setSessionCookie(token);
-
     // Redirect to Dashboard with setup param
     const destination = new URL('/dashboard', req.url);
     destination.searchParams.set('setup_company_id', payload.companyId as string);
 
-    return NextResponse.redirect(destination);
+    const response = NextResponse.redirect(destination);
+
+    // Set cookie directly on the redirect response.
+    // cookies().set() from next/headers does not work in GET route handlers in Next.js 14+,
+    // so we must set the cookie on the response object instead.
+    response.cookies.set('auth_session', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 60 * 60 * 24, // 24 hours
+    });
+
+    return response;
 }

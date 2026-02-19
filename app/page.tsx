@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AiGatekeeper from "@/components/AiGatekeeper";
-import { Activity, Lock, Shield, Keyboard, Smartphone, Eye, ShieldAlert, Unlock, Cog, RefreshCcw } from "lucide-react";
+import { Activity, Lock, Shield, Keyboard, Smartphone, Eye, ShieldAlert, Unlock, Cog, RefreshCcw, Linkedin } from "lucide-react";
 
 // --- COMPONENTS ---
 
@@ -111,8 +111,8 @@ const TerminalSidebar = () => {
   }, []);
 
   return (
-    <div className="hidden lg:block fixed left-4 top-1/2 -translate-y-1/2 w-64 h-96 pointer-events-none opacity-50 z-10 font-mono text-[10px] text-cyan-500/40 overflow-hidden">
-      <div className="border-l border-cyan-500/20 pl-4 h-full flex flex-col justify-end">
+    <div className="hidden lg:block fixed left-4 top-1/2 -translate-y-1/2 w-64 h-96 pointer-events-none opacity-80 z-10 font-mono text-[10px] text-cyan-400/80 overflow-hidden">
+      <div className="border-l border-cyan-500/50 pl-4 h-full flex flex-col justify-end">
         {lines.map((l, idx) => (
           <motion.div
             key={idx}
@@ -120,7 +120,7 @@ const TerminalSidebar = () => {
             animate={{ opacity: 1, x: 0 }}
             className="mb-1"
           >
-            <span className="text-cyan-300/60">{new Date().toLocaleTimeString().split(' ')[0]}</span> {l}
+            <span className="text-cyan-300">{new Date().toLocaleTimeString().split(' ')[0]}</span> {l}
           </motion.div>
         ))}
       </div>
@@ -242,7 +242,7 @@ const HardwareControlUnit = () => {
         </div>
 
         {/* Machine Housing */}
-        <div className="relative bg-slate-900/80 border-[4px] border-slate-800 rounded-xl p-6 md:p-10 shadow-2xl backdrop-blur-sm">
+        <div className="relative bg-slate-950/90 border-[4px] border-slate-800 rounded-xl p-6 md:p-10 shadow-2xl">
           <div className="absolute top-3 left-3 w-1.5 h-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/30" />
           <div className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/30" />
           <div className="absolute bottom-3 left-3 w-1.5 h-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/30" />
@@ -547,13 +547,22 @@ export default function LandingPage() {
       <div className="fixed inset-0 bg-[linear-gradient(rgba(6,182,212,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(6,182,212,0.03)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
       {/* HEADER */}
-      <header className="fixed top-0 w-full z-40 border-b border-cyan-900/20 bg-slate-950/80 backdrop-blur-md">
+      <header className="fixed top-0 w-full z-40 border-b border-cyan-900/20 bg-slate-950/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Activity className="text-cyan-400" size={20} />
             <span className="font-mono font-bold tracking-widest text-cyan-400 text-lg">BIO LOC</span>
           </div>
           <div className="flex items-center gap-4 text-xs font-mono text-cyan-600/60">
+            <a
+              href="https://www.linkedin.com/in/sakis-athan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/20 bg-cyan-500/5 text-cyan-400 hover:bg-cyan-500/20 hover:border-cyan-500/40 transition-all duration-300 group"
+            >
+              <Linkedin size={14} className="group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">LinkedIn</span>
+            </a>
             <span className="hidden md:inline-block">STATUS: <span className="text-green-500 animate-pulse">SECURE</span></span>
             <span className="hidden md:inline-block">ENCRYPTION: ZKP-SNARK</span>
           </div>
@@ -588,14 +597,14 @@ export default function LandingPage() {
 
           {/* INTERACTIVE TEST BOX */}
           <div className="mt-12 p-1 rounded-2xl bg-gradient-to-r from-cyan-500/20 to-purple-600/20 max-w-2xl mx-auto transform hover:scale-[1.01] transition-transform duration-500 relative shadow-2xl">
-            <div className="bg-slate-950 rounded-xl border border-white/5 relative z-10 overflow-hidden text-left flex flex-col">
+            <div className="bg-slate-950 rounded-xl border border-cyan-500/30 relative z-10 overflow-hidden text-left flex flex-col">
 
               {/* TOP SPLIT: ANALOG (Left) vs DIGITAL (Right) */}
-              <div className="grid grid-cols-2 divide-x divide-white/5 h-40 border-b border-white/5 bg-slate-900/30">
+              <div className="grid grid-cols-2 divide-x divide-cyan-500/20 h-40 border-b border-cyan-500/20 bg-slate-900/30">
 
                 {/* WINDOW 1: SIGNAL (Wave) */}
                 <div className="relative overflow-hidden group">
-                  <div className="absolute top-2 left-3 text-[9px] font-mono text-cyan-500/40 tracking-widest z-10 group-hover:text-cyan-400 transition-colors">
+                  <div className="absolute top-2 left-3 text-[9px] font-mono text-cyan-400/90 tracking-widest z-10 group-hover:text-cyan-300 transition-colors">
                     SIGNAL_SCOPE_A
                   </div>
                   <MiniCardiogram spike={spikeActivity} />
@@ -603,7 +612,7 @@ export default function LandingPage() {
 
                 {/* WINDOW 2: ANALYSIS (Data) */}
                 <div className="relative overflow-hidden group">
-                  <div className="absolute top-2 left-3 text-[9px] font-mono text-cyan-500/40 tracking-widest z-10 group-hover:text-cyan-400 transition-colors">
+                  <div className="absolute top-2 left-3 text-[9px] font-mono text-cyan-400/90 tracking-widest z-10 group-hover:text-cyan-300 transition-colors">
                     LIVE_PACKET_STREAM
                   </div>
                   <DataStream logs={logs} />
@@ -636,24 +645,24 @@ export default function LandingPage() {
 
               {/* BOTTOM: INPUTS */}
               <div className="p-6 space-y-4 bg-slate-950">
-                <div className="flex justify-between items-center text-xs font-mono text-cyan-500/70">
+                <div className="flex justify-between items-center text-xs font-mono text-cyan-400">
                   <span>TEST YOUR DNA</span>
-                  <span className="animate-pulse">waiting for input...</span>
+                  <span className="animate-pulse text-slate-300">waiting for input...</span>
                 </div>
                 <input
                   type="text"
                   value={testInput}
                   onChange={handleTestInput}
                   placeholder="Type name to start..."
-                  className="w-full bg-slate-900/50 border border-slate-800 rounded p-4 text-center text-white placeholder:text-slate-700 focus:outline-none focus:border-cyan-500 transition-colors tracking-widest text-lg font-mono focus:bg-slate-900"
+                  className="w-full bg-slate-900/50 border border-slate-600 rounded p-4 text-center text-white placeholder:text-slate-400 focus:outline-none focus:border-cyan-500 transition-colors tracking-widest text-lg font-mono focus:bg-slate-900"
                 />
                 <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="bg-slate-900/40 rounded border border-white/5 p-2 text-center">
-                    <div className="text-[9px] text-slate-600 uppercase tracking-widest mb-1">Avg Dwell</div>
+                  <div className="bg-slate-900/60 rounded border border-slate-600 p-2 text-center">
+                    <div className="text-[9px] text-slate-400 uppercase tracking-widest mb-1">Avg Dwell</div>
                     <div className="text-cyan-400 font-mono text-sm">{bioMetrics.dwellTimeAvg.toFixed(1)}ms</div>
                   </div>
-                  <div className="bg-slate-900/40 rounded border border-white/5 p-2 text-center">
-                    <div className="text-[9px] text-slate-600 uppercase tracking-widest mb-1">Rhythm Var</div>
+                  <div className="bg-slate-900/60 rounded border border-slate-600 p-2 text-center">
+                    <div className="text-[9px] text-slate-400 uppercase tracking-widest mb-1">Rhythm Var</div>
                     <div className="text-purple-400 font-mono text-sm">{bioMetrics.rhythmVariance.toFixed(1)}</div>
                   </div>
                 </div>
@@ -705,8 +714,8 @@ export default function LandingPage() {
               THE END OF <br />
               <span className="text-red-500">CENTRALIZED RISK</span>.
             </h2>
-            <div className="p-6 border-l-2 border-red-500/30 bg-red-950/5">
-              <p className="text-slate-400 text-lg">
+            <div className="p-6 border-l-2 border-red-500/30 bg-slate-900/40 backdrop-blur-xl rounded-r-xl">
+              <p className="text-slate-300 text-lg">
                 Traditional biometrics store your face and fingerprints in databases.
                 <strong className="block mt-2 text-red-400">If they get hacked, you lose your identity forever.</strong>
               </p>
@@ -715,12 +724,12 @@ export default function LandingPage() {
 
           <motion.div
             initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
-            className="p-8 rounded-3xl bg-cyan-950/10 border border-cyan-500/20 backdrop-blur-sm relative overflow-hidden group"
+            className="p-8 rounded-3xl bg-slate-950/80 border border-cyan-500/30 backdrop-blur-xl relative overflow-hidden group"
           >
             <div className="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <Lock size={48} className="text-cyan-400 mb-6" />
-            <h3 className="text-2xl font-bold text-cyan-100 mb-4">THE ZKP SOLUTION</h3>
-            <p className="text-cyan-200/70 leading-relaxed mb-6">
+            <h3 className="text-2xl font-bold text-white mb-4">THE ZKP SOLUTION</h3>
+            <p className="text-slate-200 leading-relaxed mb-6">
               BIO LOC uses <span className="text-white font-medium">Zero-Knowledge Proofs</span>.
               Your data never leaves your device. We verify the Proof, not the Secret.
             </p>
@@ -732,16 +741,16 @@ export default function LandingPage() {
 
 
         {/* DUAL INSTRUMENT GRID */}
-        < div className="w-full max-w-6xl mb-32" >
+        < div className="w-full max-w-6xl mb-32 relative z-20" >
           <div className="grid md:grid-cols-3 gap-6">
             {/* ITEM 1 */}
             <motion.div
               whileHover={{ y: -5 }}
-              className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/30 transition-all group text-left"
+              className="p-8 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl hover:border-cyan-500/50 transition-all group text-left"
             >
-              <Keyboard size={32} className="text-slate-600 group-hover:text-cyan-400 mb-4 transition-colors" />
-              <h3 className="text-lg font-bold text-slate-200 mb-2">KEYBOARD DNA</h3>
-              <p className="text-slate-500 text-sm leading-relaxed group-hover:text-slate-400">
+              <Keyboard size={32} className="text-slate-400 group-hover:text-cyan-400 mb-4 transition-colors" />
+              <h3 className="text-lg font-bold text-white mb-2">KEYBOARD DNA</h3>
+              <p className="text-slate-200 text-sm leading-relaxed group-hover:text-slate-100">
                 Captures 10-finger typing rhythm for desktop workstations. Detailed dwell-time analysis.
               </p>
             </motion.div>
@@ -749,11 +758,11 @@ export default function LandingPage() {
             {/* ITEM 2 */}
             <motion.div
               whileHover={{ y: -5 }}
-              className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-purple-500/30 transition-all group text-left"
+              className="p-8 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl hover:border-purple-500/50 transition-all group text-left"
             >
-              <Smartphone size={32} className="text-slate-600 group-hover:text-purple-400 mb-4 transition-colors" />
-              <h3 className="text-lg font-bold text-slate-200 mb-2">MOBILE ANCHOR</h3>
-              <p className="text-slate-500 text-sm leading-relaxed group-hover:text-slate-400">
+              <Smartphone size={32} className="text-slate-400 group-hover:text-purple-400 mb-4 transition-colors" />
+              <h3 className="text-lg font-bold text-white mb-2">MOBILE ANCHOR</h3>
+              <p className="text-slate-200 text-sm leading-relaxed group-hover:text-slate-100">
                 Analyzes 2-thumb rhythm, hand-tilt (gyroscope), and gait stability on smartphones.
               </p>
             </motion.div>
@@ -761,11 +770,11 @@ export default function LandingPage() {
             {/* ITEM 3 */}
             <motion.div
               whileHover={{ y: -5 }}
-              className="p-8 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-emerald-500/30 transition-all group text-left"
+              className="p-8 rounded-2xl bg-slate-950/80 border border-slate-800 backdrop-blur-xl hover:border-emerald-500/50 transition-all group text-left"
             >
-              <Eye size={32} className="text-slate-600 group-hover:text-emerald-400 mb-4 transition-colors" />
-              <h3 className="text-lg font-bold text-slate-200 mb-2">CONTINUOUS MONITORING</h3>
-              <p className="text-slate-500 text-sm leading-relaxed group-hover:text-slate-400">
+              <Eye size={32} className="text-slate-400 group-hover:text-emerald-400 mb-4 transition-colors" />
+              <h3 className="text-lg font-bold text-white mb-2">CONTINUOUS MONITORING</h3>
+              <p className="text-slate-200 text-sm leading-relaxed group-hover:text-slate-100">
                 Senses anomalies in milliseconds. If the user changes, the terminal locks instantly.
               </p>
             </motion.div>
@@ -774,9 +783,9 @@ export default function LandingPage() {
 
         {/* CONTACT SECTION (The Manual Gate) */}
         < div className="w-full max-w-2xl text-center mb-12 relative z-20" >
-          <div className="p-8 border-t border-slate-800/50">
+          <div className="p-10 bg-slate-950/80 rounded-3xl border border-slate-700 backdrop-blur-xl shadow-2xl">
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-6">Order a Link to Try the app</h3>
-            <p className="text-slate-500 text-sm mb-8 font-mono">
+            <p className="text-slate-300 text-sm mb-8 font-mono">
               Security Protocol: Access keys are generated and sent manually by human operators.
             </p>
 

@@ -7,7 +7,37 @@ import { generateMagicLink } from '@/lib/link-generator';
 export async function POST(req: Request) {
     try {
         // --- SECURITY: Session Verification ---
-        const session = await getSession();
+        // --- SECURITY: Session Verification ---
+        // 1. Try User Session
+        let session = await getSession();
+
+        // 2. Fallback: Try Admin Session (if coming from Nexus Control)
+        if (!session) {
+            const cookieStore = await import('next/headers').then(mod => mod.cookies());
+            const adminToken = cookieStore.get('admin_session')?.value;
+
+            if (adminToken) {
+                try {
+                    const secretEnv = process.env.ADMIN_ROUTE;
+                    if (secretEnv) {
+                        const adminKey = new TextEncoder().encode(secretEnv);
+                        const { payload } = await import('jose').then(mod => mod.jwtVerify(adminToken, adminKey));
+                        if (payload) {
+                            // Valid Admin - Create a mock session to proceed
+                            session = {
+                                companyId: 'ADMIN_OVERRIDE',
+                                userId: 'admin',
+                                role: 'admin',
+                                biometricVerified: true
+                            };
+                        }
+                    }
+                } catch (e) {
+                    console.log("Admin session invalid:", e);
+                }
+            }
+        }
+
         if (!session) {
             return NextResponse.json({ error: "Unauthorized: Admin session required" }, { status: 401 });
         }
