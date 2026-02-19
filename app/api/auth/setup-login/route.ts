@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { createSession, setSessionCookie } from '@/lib/auth-cookie';
+import { createSession } from '@/lib/auth-cookie';
 
 export async function POST(req: Request) {
     try {
@@ -20,20 +20,28 @@ export async function POST(req: Request) {
         }
 
         // 2. Create Session
-        // We grant 'admin' role for this company context
         const sessionPayload = {
             companyId,
             userId: 'setup_admin',
             role: 'admin',
-            biometricVerified: true // Trust the setup link as a verified entry point
+            biometricVerified: true
         };
 
         const token = await createSession(sessionPayload);
 
-        // 3. Set Cookie
-        await setSessionCookie(token);
+        // 3. Set cookie directly on the response object.
+        // setSessionCookie() uses cookies().set() which can be unreliable in route handlers.
+        // Using response.cookies.set() guarantees the Set-Cookie header is always sent.
+        const response = NextResponse.json({ success: true, token });
+        response.cookies.set('auth_session', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/',
+            maxAge: 60 * 60 * 24, // 24 hours
+        });
 
-        return NextResponse.json({ success: true, token });
+        return response;
 
     } catch (error) {
         console.error("Setup Login Error:", error);

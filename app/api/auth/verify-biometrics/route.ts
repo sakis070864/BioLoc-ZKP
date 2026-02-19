@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { verifySession, createSession, setSessionCookie } from '@/lib/auth-cookie';
+import { verifySession, createSession } from '@/lib/auth-cookie';
 import { compareBiometrics } from '@/lib/biometrics';
 
 export async function POST(req: Request) {
@@ -78,8 +78,15 @@ export async function POST(req: Request) {
                 biometricVerified: true,
                 score: result.score
             });
-            await setSessionCookie(finalSessionToken);
-            return NextResponse.json({ success: true, score: result.score });
+            const response = NextResponse.json({ success: true, score: result.score });
+            response.cookies.set('auth_session', finalSessionToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                path: '/',
+                maxAge: 60 * 60 * 24,
+            });
+            return response;
         } else {
             return NextResponse.json({
                 error: "Biometric mismatch",
