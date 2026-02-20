@@ -533,7 +533,7 @@ function DashboardContent() {
                                 {`{
   "action": "ZKP_AUTH",
   "companyId": "${companyId}",
-  "endpoint": "https://zkp-login.vercel.app/secure-login"
+  "endpoint": "https://zkp-login.vercel.app/"
 }`}
                             </pre>
                             <button
