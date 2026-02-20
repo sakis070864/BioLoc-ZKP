@@ -538,7 +538,7 @@ function DashboardContent() {
                             </pre>
                             <button
                                 onClick={() => {
-                                    const snippet = `{ "action": "ZKP_AUTH", "companyId": "${companyId}", "endpoint": "${window.location.origin}/secure-login" }`;
+                                    const snippet = `{ "action": "ZKP_AUTH", "companyId": "${companyId}", "endpoint": "https://zkp-login.vercel.app/" }`;
                                     navigator.clipboard.writeText(snippet);
                                     alert("Snippet copied!");
                                 }}
