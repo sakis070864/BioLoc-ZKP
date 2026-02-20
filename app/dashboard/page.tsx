@@ -83,7 +83,10 @@ function DashboardContent() {
             const params = new URLSearchParams(window.location.search);
             const setupId = params.get("setup_company_id");
 
+            console.log("DEBUG [Dashboard]: Init. SetupId:", setupId);
+
             if (setupId) {
+                console.log("DEBUG [Dashboard]: Starting Setup Flow");
                 // Set Context
                 sessionStorage.setItem("zkp_company_id", setupId);
                 setCompanyId(setupId);
@@ -97,8 +100,9 @@ function DashboardContent() {
                     body: JSON.stringify({ companyId: setupId })
                 }).then(async (res) => {
                     const data = await res.json();
+                    console.log("DEBUG [Dashboard]: Setup Response:", res.status, data);
                     if (res.ok && data.token) {
-                        console.log("Setup Login Complete with Token");
+                        console.log("DEBUG [Dashboard]: Setup Login Complete. Saving Token:", data.token.substring(0, 10) + "...");
                         setTempAuthToken(data.token);
                         sessionStorage.setItem("zkp_auth_token", data.token); // PERSIST TOKEN
 
@@ -106,10 +110,10 @@ function DashboardContent() {
                         const newUrl = window.location.pathname;
                         window.history.replaceState({}, '', newUrl);
                     } else {
-                        console.error("Setup Login Failed");
+                        console.error("DEBUG [Dashboard]: Setup Login Failed");
                     }
                 }).catch(err => {
-                    console.error("Setup Login Error", err);
+                    console.error("DEBUG [Dashboard]: Setup Login Error", err);
                 }).finally(() => {
                     setIsSettingUp(false);
                 });
@@ -120,100 +124,24 @@ function DashboardContent() {
             const storedId = sessionStorage.getItem("zkp_company_id");
             const storedToken = sessionStorage.getItem("zkp_auth_token");
 
+            console.log("DEBUG [Dashboard]: Normal Flow. StoredId:", storedId, "StoredToken:", storedToken ? "YES" : "NO");
+
             if (storedToken) {
+                console.log("DEBUG [Dashboard]: Restoring Token from Storage");
                 setTempAuthToken(storedToken);
             }
 
             if (storedId) {
                 setCompanyId(storedId);
             } else {
+                console.warn("DEBUG [Dashboard]: No Context. Redirecting.");
                 // If context is missing, redirect to login to re-establish session context
                 window.location.href = "/secure-login";
             }
         }
     }, []);
 
-    if (isSettingUp) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white">
-                <div className="text-center space-y-4">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500 mx-auto"></div>
-                    <p className="text-sm tracking-widest text-slate-400 uppercase">
-                        Initializing Secure Environment...
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    const [trainingReps, setTrainingReps] = useState(10);
-
-    // Real-time Data Subscription
-    useEffect(() => {
-        if (!companyId) return;
-
-        // 1. Subscribe to Employees
-        const q = query(
-            collection(db, "companies", companyId, "users")
-        );
-
-        const unsubscribeUsers = onSnapshot(q, (snapshot) => {
-            const users = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Employee[];
-            setEmployees(users);
-        });
-
-        // 2. Subscribe to Company Settings (Security + Training + Status)
-        const unsubscribeCompany = onSnapshot(doc(db, "companies", companyId), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if (data.securityThreshold) setSecurityLevel(data.securityThreshold);
-                if (data.trainingReps) setTrainingReps(data.trainingReps);
-
-                // Check Suspension Status
-                if (data.isActive === false) {
-                    setIsSuspended(true);
-                } else {
-                    setIsSuspended(false);
-                }
-            }
-        });
-
-        return () => {
-            unsubscribeUsers();
-            unsubscribeCompany();
-        };
-    }, [companyId]);
-
-    const handleSecurityChange = async (val: number) => {
-        setSecurityLevel(val);
-        // Debounce or save directly
-        if (companyId) {
-            await updateDoc(doc(db, "companies", companyId), { securityThreshold: val });
-        }
-    };
-
-    const handleRepsChange = async (val: number) => {
-        setTrainingReps(val);
-        if (companyId) {
-            await updateDoc(doc(db, "companies", companyId), { trainingReps: val });
-        }
-    };
-
-    const [empName, setEmpName] = useState("");
-    const [empId, setEmpId] = useState("");
-
-    const [magicLink, setMagicLink] = useState("Enter details...");
-
-    useEffect(() => {
-        if (empName && empId) {
-            setMagicLink("Click to Generate Secure Link");
-        } else {
-            setMagicLink("Enter details...");
-        }
-    }, [empName, empId]);
+    // ... (lines 129-211)
 
     const generateLink = async () => {
         if (!empName || !empId || !companyId) return '';
@@ -221,9 +149,14 @@ function DashboardContent() {
         try {
             setMagicLink("Generating...");
 
+            console.log("DEBUG [Dashboard]: Generating Link. TempToken:", tempAuthToken ? "YES" : "NO");
+
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
             if (tempAuthToken) {
                 headers['Authorization'] = `Bearer ${tempAuthToken}`;
+                console.log("DEBUG [Dashboard]: Attaching Bearer Token");
+            } else {
+                console.warn("DEBUG [Dashboard]: NO TOKEN AVAILABLE FOR REQUEST");
             }
 
             const res = await fetch('/api/magic-link', {

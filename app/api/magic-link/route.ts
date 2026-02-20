@@ -6,23 +6,31 @@ import { generateMagicLink } from '@/lib/link-generator';
 
 export async function POST(req: Request) {
     try {
-        // --- SECURITY: Session Verification ---
+        console.log("DEBUG [API MagicLink]: Request Received");
+
         // --- SECURITY: Session Verification ---
         // 1. Try User Session
         let session = await getSession();
+        console.log("DEBUG [API MagicLink]: Cookie Session:", session ? "FOUND" : "MISSING");
 
         // 2. Fallback: Try Bearer Token (Setup Flow)
         if (!session) {
             const authHeader = req.headers.get('Authorization');
+            console.log("DEBUG [API MagicLink]: Auth Header:", authHeader ? "PRESENT" : "MISSING");
+
             if (authHeader && authHeader.startsWith('Bearer ')) {
                 const token = authHeader.split(' ')[1];
+                console.log("DEBUG [API MagicLink]: Bearer Token extracted:", token.substring(0, 10) + "...");
                 try {
                     const payload = await import('@/lib/auth-cookie').then(m => m.verifySession(token));
                     if (payload) {
                         session = payload;
+                        console.log("DEBUG [API MagicLink]: Bearer Token Verified Successfully");
+                    } else {
+                        console.log("DEBUG [API MagicLink]: Bearer Token Verification FAILED (Null Payload)");
                     }
                 } catch (e) {
-                    console.error("Bearer Token Invalid:", e);
+                    console.error("DEBUG [API MagicLink]: Bearer Token Invalid:", e);
                 }
             }
         }
