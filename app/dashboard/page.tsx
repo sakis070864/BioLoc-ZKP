@@ -217,14 +217,20 @@ function DashboardContent() {
         try {
             setMagicLink("Generating...");
 
-            console.log("DEBUG [Dashboard]: Generating Link. TempToken:", tempAuthToken ? "YES" : "NO");
+            console.log("DEBUG [Dashboard]: Generating Link.");
+            console.log("DEBUG [Dashboard]: State tempAuthToken:", tempAuthToken ? tempAuthToken.substring(0, 10) + "..." : "NULL");
+            console.log("DEBUG [Dashboard]: SessionStorage token:", sessionStorage.getItem("zkp_auth_token") ? sessionStorage.getItem("zkp_auth_token")?.substring(0, 10) + "..." : "NULL");
+            console.log("DEBUG [Dashboard]: document.cookie exists:", document.cookie.includes('auth_session=') ? "YES" : "NO");
+
+            // Use state token, fallback to sessionStorage if state got lost during re-renders
+            const activeToken = tempAuthToken || sessionStorage.getItem("zkp_auth_token");
 
             const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (tempAuthToken) {
-                headers['Authorization'] = `Bearer ${tempAuthToken}`;
-                console.log("DEBUG [Dashboard]: Attaching Bearer Token");
+            if (activeToken) {
+                headers['Authorization'] = `Bearer ${activeToken}`;
+                console.log("DEBUG [Dashboard]: Attaching Bearer Token:", activeToken.substring(0, 10) + "...");
             } else {
-                console.warn("DEBUG [Dashboard]: NO TOKEN AVAILABLE FOR REQUEST");
+                console.warn("DEBUG [Dashboard]: NO TOKEN AVAILABLE FOR REQUEST (Both state and storage are empty)");
             }
 
             const res = await fetch('/api/magic-link', {
