@@ -251,11 +251,20 @@ function DashboardContent() {
         if (!confirm(`Delete ${companyId}? This is irreversible and will delete all users and logs.`)) return;
         setLoading(true); // Reuse loading state to prevent double clicks
         try {
-            // 1. Delete all users in the subcollection
+            // 1. Delete all users in the subcollection and their nested history
             const usersQ = query(collection(db, 'companies', companyId, 'users'));
             const userDocs = await getDocs(usersQ);
-            const deleteUserPromises = userDocs.docs.map(d => deleteDoc(d.ref));
-            await Promise.all(deleteUserPromises);
+
+            for (const userDoc of userDocs.docs) {
+                // Delete 'history' subcollection for this user
+                const historyQ = query(collection(db, 'companies', companyId, 'users', userDoc.id, 'history'));
+                const historyDocs = await getDocs(historyQ);
+                const deleteHistoryPromises = historyDocs.docs.map(h => deleteDoc(h.ref));
+                await Promise.all(deleteHistoryPromises);
+
+                // Delete user itself
+                await deleteDoc(userDoc.ref);
+            }
 
             // 2. Delete all login_logs in the subcollection
             const logsQ = query(collection(db, 'companies', companyId, 'login_logs'));
