@@ -77,6 +77,12 @@ function DashboardContent() {
     const [isSettingUp, setIsSettingUp] = useState(false);
     const [tempAuthToken, setTempAuthToken] = useState<string | null>(null);
 
+    // --- RESTORED STATE ---
+    const [empName, setEmpName] = useState("");
+    const [empId, setEmpId] = useState("");
+    const [magicLink, setMagicLink] = useState("Enter details...");
+    // ----------------------
+
     useEffect(() => {
         if (typeof window !== "undefined") {
             // 1. Check for Magic Link Setup
@@ -141,7 +147,69 @@ function DashboardContent() {
         }
     }, []);
 
-    // ... (lines 129-211)
+    const [trainingReps, setTrainingReps] = useState(10);
+
+    // Real-time Data Subscription
+    useEffect(() => {
+        if (!companyId) return;
+
+        // 1. Subscribe to Employees
+        const q = query(
+            collection(db, "companies", companyId, "users")
+        );
+
+        const unsubscribeUsers = onSnapshot(q, (snapshot) => {
+            const users = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Employee[];
+            setEmployees(users);
+        });
+
+        // 2. Subscribe to Company Settings (Security + Training + Status)
+        const unsubscribeCompany = onSnapshot(doc(db, "companies", companyId), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.securityThreshold) setSecurityLevel(data.securityThreshold);
+                if (data.trainingReps) setTrainingReps(data.trainingReps);
+
+                // Check Suspension Status
+                if (data.isActive === false) {
+                    setIsSuspended(true);
+                } else {
+                    setIsSuspended(false);
+                }
+            }
+        });
+
+        return () => {
+            unsubscribeUsers();
+            unsubscribeCompany();
+        };
+    }, [companyId]);
+
+    const handleSecurityChange = async (val: number) => {
+        setSecurityLevel(val);
+        // Debounce or save directly
+        if (companyId) {
+            await updateDoc(doc(db, "companies", companyId), { securityThreshold: val });
+        }
+    };
+
+    const handleRepsChange = async (val: number) => {
+        setTrainingReps(val);
+        if (companyId) {
+            await updateDoc(doc(db, "companies", companyId), { trainingReps: val });
+        }
+    };
+
+    useEffect(() => {
+        if (empName && empId) {
+            setMagicLink("Click to Generate Secure Link");
+        } else {
+            setMagicLink("Enter details...");
+        }
+    }, [empName, empId]);
 
     const generateLink = async () => {
         if (!empName || !empId || !companyId) return '';
