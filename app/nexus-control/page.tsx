@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp, getDocs, query } from 'firebase/firestore';
 import { ShieldCheck, Plus, Trash2, Copy, ExternalLink, RefreshCw, Lock, Terminal } from 'lucide-react';
 import { clsx } from 'clsx';
 import Link from 'next/link';
@@ -248,11 +248,29 @@ function DashboardContent() {
     };
 
     const handleDelete = async (companyId: string) => {
-        if (!confirm(`Delete ${companyId}? This is irreversible.`)) return;
+        if (!confirm(`Delete ${companyId}? This is irreversible and will delete all users and logs.`)) return;
+        setLoading(true); // Reuse loading state to prevent double clicks
         try {
+            // 1. Delete all users in the subcollection
+            const usersQ = query(collection(db, 'companies', companyId, 'users'));
+            const userDocs = await getDocs(usersQ);
+            const deleteUserPromises = userDocs.docs.map(d => deleteDoc(d.ref));
+            await Promise.all(deleteUserPromises);
+
+            // 2. Delete all login_logs in the subcollection
+            const logsQ = query(collection(db, 'companies', companyId, 'login_logs'));
+            const logDocs = await getDocs(logsQ);
+            const deleteLogPromises = logDocs.docs.map(d => deleteDoc(d.ref));
+            await Promise.all(deleteLogPromises);
+
+            // 3. Delete the parent company document
             await deleteDoc(doc(db, 'companies', companyId));
+
         } catch (error) {
             console.error(error);
+            alert("Error deleting company and data");
+        } finally {
+            setLoading(false);
         }
     };
 
