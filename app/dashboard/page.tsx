@@ -243,7 +243,7 @@ function DashboardContent() {
                 const errData = await res.json().catch(() => ({}));
                 console.error("Link Gen Error:", res.status, errData);
                 if (res.status === 401) {
-                    alert("Session expired. Please log in again.");
+                    alert(`Auth Error: Session expired or invalid.\n\nDetails:\n${errData.details || errData.error || 'Unknown Error'}`);
                     window.location.href = "/secure-login";
                     return '';
                 }

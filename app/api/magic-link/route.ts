@@ -14,6 +14,7 @@ export async function POST(req: Request) {
         console.log("DEBUG [API MagicLink]: Cookie Session:", session ? "FOUND" : "MISSING");
 
         // 2. Fallback: Try Bearer Token (Setup Flow)
+        let bearerReason = "No Bearer Auth Header supplied";
         if (!session) {
             const authHeader = req.headers.get('Authorization');
             console.log("DEBUG [API MagicLink]: Auth Header:", authHeader ? "PRESENT" : "MISSING");
@@ -27,9 +28,11 @@ export async function POST(req: Request) {
                         session = payload;
                         console.log("DEBUG [API MagicLink]: Bearer Token Verified Successfully");
                     } else {
+                        bearerReason = "Token Verification Returned Null (Invalid/Expired)";
                         console.log("DEBUG [API MagicLink]: Bearer Token Verification FAILED (Null Payload)");
                     }
                 } catch (e) {
+                    bearerReason = e instanceof Error ? e.message : String(e);
                     console.error("DEBUG [API MagicLink]: Bearer Token Invalid:", e);
                 }
             }
@@ -65,10 +68,11 @@ export async function POST(req: Request) {
         if (!session) {
             const cookieStore = await import('next/headers').then(mod => mod.cookies());
             const hasCookie = cookieStore.has('auth_session');
+            const cookieReason = hasCookie ? "Cookie validation failed or expired" : "No auth_session cookie found";
             console.error(`Magic Link 401: Session Invalid. Cookie present: ${hasCookie}`);
             return NextResponse.json({
                 error: "Unauthorized",
-                details: hasCookie ? "Session Verification Failed" : "No Session Cookie Found"
+                details: `Cookie Auth: ${cookieReason} | Bearer Auth: ${bearerReason}`
             }, { status: 401 });
         }
 
