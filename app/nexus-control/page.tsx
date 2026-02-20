@@ -251,33 +251,25 @@ function DashboardContent() {
         if (!confirm(`Delete ${companyId}? This is irreversible and will delete all users and logs.`)) return;
         setLoading(true); // Reuse loading state to prevent double clicks
         try {
-            // 1. Delete all users in the subcollection and their nested history
-            const usersQ = query(collection(db, 'companies', companyId, 'users'));
-            const userDocs = await getDocs(usersQ);
+            console.log(`[Dashboard] Sending termination request for ${companyId}...`);
+            const res = await fetch('/api/admin/terminate-company', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ companyId })
+            });
 
-            for (const userDoc of userDocs.docs) {
-                // Delete 'history' subcollection for this user
-                const historyQ = query(collection(db, 'companies', companyId, 'users', userDoc.id, 'history'));
-                const historyDocs = await getDocs(historyQ);
-                const deleteHistoryPromises = historyDocs.docs.map(h => deleteDoc(h.ref));
-                await Promise.all(deleteHistoryPromises);
+            const data = await res.json();
 
-                // Delete user itself
-                await deleteDoc(userDoc.ref);
+            if (!res.ok) {
+                console.error(`[Dashboard] Termination API Error:`, data);
+                throw new Error(data.error || "Unknown API error");
             }
 
-            // 2. Delete all login_logs in the subcollection
-            const logsQ = query(collection(db, 'companies', companyId, 'login_logs'));
-            const logDocs = await getDocs(logsQ);
-            const deleteLogPromises = logDocs.docs.map(d => deleteDoc(d.ref));
-            await Promise.all(deleteLogPromises);
-
-            // 3. Delete the parent company document
-            await deleteDoc(doc(db, 'companies', companyId));
-
+            console.log(`[Dashboard] Terminated:`, data.message);
+            // Let the onSnapshot listener naturally remove the company from the UI.
         } catch (error) {
             console.error(error);
-            alert("Error deleting company and data");
+            alert(`Error deleting company: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             setLoading(false);
         }
