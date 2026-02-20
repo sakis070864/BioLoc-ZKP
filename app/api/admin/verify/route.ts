@@ -32,7 +32,7 @@ export async function GET(req: Request) {
         response.cookies.set('admin_session', sessionToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             maxAge: 60 * 60 * 24, // 24 hours
             path: '/',
         });

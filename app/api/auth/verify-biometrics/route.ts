@@ -78,11 +78,11 @@ export async function POST(req: Request) {
                 biometricVerified: true,
                 score: result.score
             });
-            const response = NextResponse.json({ success: true, score: result.score });
+            const response = NextResponse.json({ success: true, score: result.score, token: finalSessionToken });
             response.cookies.set('auth_session', finalSessionToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
+                sameSite: 'lax',
                 path: '/',
                 maxAge: 60 * 60 * 24,
             });

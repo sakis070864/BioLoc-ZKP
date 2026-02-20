@@ -263,6 +263,9 @@ const SecureLoginPage = () => {
             const data = await res.json();
 
             if (res.ok) {
+                if (data.token && typeof window !== 'undefined') {
+                    sessionStorage.setItem("zkp_auth_token", data.token);
+                }
                 setState('SUCCESS');
                 // Redirect to dashboard on success
                 setTimeout(() => router.push('/dashboard'), 1500);
