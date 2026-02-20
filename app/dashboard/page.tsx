@@ -139,6 +139,25 @@ function DashboardContent() {
 
             if (storedId) {
                 setCompanyId(storedId);
+                // NEW FALLBACK: If we have an ID but no token, perhaps we are an Admin who just refreshed the page.
+                // Let's try to get a temporary token using our Admin cookie.
+                if (!storedToken) {
+                    console.log("DEBUG [Dashboard]: Stored Token missing. Attempting Admin Token Fallback...");
+                    fetch('/api/auth/setup-login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ companyId: storedId })
+                    }).then(async (res) => {
+                        const data = await res.json();
+                        if (res.ok && data.token) {
+                            console.log("DEBUG [Dashboard]: Admin Token Fallback Success.");
+                            setTempAuthToken(data.token);
+                            sessionStorage.setItem("zkp_auth_token", data.token);
+                        } else {
+                            console.warn("DEBUG [Dashboard]: Admin Token Fallback Failed.");
+                        }
+                    }).catch(e => console.error("DEBUG [Dashboard]: Admin Fallback Error", e));
+                }
             } else {
                 console.warn("DEBUG [Dashboard]: No Context. Redirecting.");
                 // If context is missing, redirect to login to re-establish session context
