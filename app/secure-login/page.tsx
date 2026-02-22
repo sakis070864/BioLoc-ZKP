@@ -267,8 +267,20 @@ const SecureLoginPage = () => {
                     sessionStorage.setItem("zkp_auth_token", data.token);
                 }
                 setState('SUCCESS');
-                // Redirect to dashboard on success
-                setTimeout(() => router.push('/dashboard'), 1500);
+
+                // Redirect logic
+                const redirectUrl = searchParams.get('redirectUrl');
+                setTimeout(() => {
+                    if (redirectUrl) {
+                        // Append the auth token to the return URL
+                        const url = new URL(redirectUrl);
+                        url.searchParams.set('token', data.token || "");
+                        window.location.href = url.toString();
+                    } else {
+                        // Fallback to internal dashboard
+                        router.push('/dashboard');
+                    }
+                }, 1500);
             } else {
                 if (retries >= 1) {
                     handleLockdown();

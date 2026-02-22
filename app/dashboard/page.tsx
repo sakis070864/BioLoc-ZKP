@@ -533,12 +533,13 @@ function DashboardContent() {
                                 {`{
   "action": "ZKP_AUTH",
   "companyId": "${companyId}",
-  "endpoint": "https://zkp-login.vercel.app/"
+  "endpoint": "https://zkp-login.vercel.app/",
+  "redirectUrl": "https://oikoinvest.com/"
 }`}
                             </pre>
                             <button
                                 onClick={() => {
-                                    const snippet = `{ "action": "ZKP_AUTH", "companyId": "${companyId}", "endpoint": "https://zkp-login.vercel.app/" }`;
+                                    const snippet = `{ "action": "ZKP_AUTH", "companyId": "${companyId}", "endpoint": "https://zkp-login.vercel.app/", "redirectUrl": "https://oikoinvest.com/" }`;
                                     navigator.clipboard.writeText(snippet);
                                     alert("Snippet copied!");
                                 }}
