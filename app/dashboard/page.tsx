@@ -526,20 +526,49 @@ function DashboardContent() {
                             <Lock size={14} /> Client Integration
                         </h3>
                         <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
-                            Paste this JSON snippet into your login button handler to secure your app.
+                            Paste this snippet into your website to secure your app instantly.
                         </p>
-                        <div className="bg-black/60 p-3 rounded-lg border border-slate-800 relative group">
-                            <pre className="text-[10px] text-purple-300 font-mono overflow-x-auto">
-                                {`{
-  "action": "ZKP_AUTH",
-  "companyId": "${companyId}",
-  "endpoint": "https://zkp-login.vercel.app/",
-  "redirectUrl": "https://oikoinvest.com/"
-}`}
+                        <div className="bg-black/60 p-4 rounded-lg border border-slate-800 relative group overflow-hidden">
+                            <pre className="text-[10px] text-purple-300 font-mono overflow-x-auto whitespace-pre">
+                                {`<script>
+    function loginWithZKP() {
+        
+        // --- 1. Customer changes these two lines: ---
+        const COMPANY_ID = "${companyId}";
+        const DESIRED_DESTINATION = "https://your-site-app.com";
+        // ---------------------------------------------
+        
+        // This instantly securely redirects the ENTIRE page to your Gateway
+        const zkpUrl = \`https://zkp-login.vercel.app/?companyId=\${COMPANY_ID}&redirectUrl=\${encodeURIComponent(DESIRED_DESTINATION)}\`;
+        window.location.href = zkpUrl;
+    }
+</script>
+
+<!-- The button on the customer's website -->
+<button onclick="loginWithZKP()" style="padding: 10px 20px; font-size: 16px; background-color: #0ea5e9; color: white; border: none; border-radius: 5px; cursor: pointer;">
+    Login with Bio-ZKP Secure
+</button>`}
                             </pre>
                             <button
                                 onClick={() => {
-                                    const snippet = `{ "action": "ZKP_AUTH", "companyId": "${companyId}", "endpoint": "https://zkp-login.vercel.app/", "redirectUrl": "https://oikoinvest.com/" }`;
+                                    const snippet = `<script>
+    function loginWithZKP() {
+        
+        // --- 1. Customer changes these two lines: ---
+        const COMPANY_ID = "${companyId}";
+        const DESIRED_DESTINATION = "https://your-site-app.com";
+        // ---------------------------------------------
+        
+        // This instantly securely redirects the ENTIRE page to your Gateway
+        const zkpUrl = \`https://zkp-login.vercel.app/?companyId=\${COMPANY_ID}&redirectUrl=\${encodeURIComponent(DESIRED_DESTINATION)}\`;
+        window.location.href = zkpUrl;
+    }
+</script>
+
+<!-- The button on the customer's website -->
+<button onclick="loginWithZKP()" style="padding: 10px 20px; font-size: 16px; background-color: #0ea5e9; color: white; border: none; border-radius: 5px; cursor: pointer;">
+    Login with Bio-ZKP Secure
+</button>`;
                                     navigator.clipboard.writeText(snippet);
                                     alert("Snippet copied!");
                                 }}
